@@ -1,0 +1,18 @@
+<Layouts.app flash={@flash}>
+  <.header>
+    Brand {@brand.id}
+    <:subtitle>This is a brand record from your database.</:subtitle>
+    <:actions>
+      <.button navigate={~p"/brands"}>
+        <.icon name="hero-arrow-left" />
+      </.button>
+      <.button variant="primary" navigate={~p"/brands/#{@brand}/edit?return_to=show"}>
+        <.icon name="hero-pencil-square" /> Edit brand
+      </.button>
+    </:actions>
+  </.header>
+
+  <.list>
+    <:item title="Name">{@brand.name}</:item>
+  </.list>
+</Layouts.app>

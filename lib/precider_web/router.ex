@@ -20,7 +20,12 @@ defmodule PreciderWeb.Router do
   scope "/", PreciderWeb do
     pipe_through :browser
 
+    resources "/brands", BrandController
+    resources "/ingredients", IngredientController
+    resources "/products", ProductController
+    resources "/product_ingredients", ProductIngredientController
     get "/", PageController, :home
+    
   end
 
   # Other scopes may use custom stacks.

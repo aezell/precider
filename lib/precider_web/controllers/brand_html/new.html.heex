@@ -1,0 +1,8 @@
+<Layouts.app flash={@flash}>
+  <.header>
+    New Brand
+    <:subtitle>Use this form to manage brand records in your database.</:subtitle>
+  </.header>
+
+  <.brand_form changeset={@changeset} action={~p"/brands"} return_to={~p"/brands"} />
+</Layouts.app>

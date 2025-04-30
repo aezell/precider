@@ -1,0 +1,18 @@
+<Layouts.app flash={@flash}>
+  <.header>
+    Product ingredient {@product_ingredient.id}
+    <:subtitle>This is a product_ingredient record from your database.</:subtitle>
+    <:actions>
+      <.button navigate={~p"/product_ingredients"}>
+        <.icon name="hero-arrow-left" />
+      </.button>
+      <.button variant="primary" navigate={~p"/product_ingredients/#{@product_ingredient}/edit?return_to=show"}>
+        <.icon name="hero-pencil-square" /> Edit product_ingredient
+      </.button>
+    </:actions>
+  </.header>
+
+  <.list>
+    <:item title="Dosage amount">{@product_ingredient.dosage_amount}</:item>
+  </.list>
+</Layouts.app>
