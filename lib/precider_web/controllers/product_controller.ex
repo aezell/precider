@@ -11,7 +11,17 @@ defmodule PreciderWeb.ProductController do
 
   def new(conn, _params) do
     changeset = Catalog.change_product(%Product{})
-    render(conn, :new, changeset: changeset)
+    brands = Catalog.list_brands()
+    ingredients = Catalog.list_ingredients()
+    
+    render(conn, :new,
+      changeset: changeset,
+      brand_options: Enum.map(brands, &{&1.name, &1.id}),
+      ingredients: ingredients,
+      selected_ingredient_ids: [],
+      ingredient_dosages: %{},
+      ingredient_units: %{}
+    )
   end
 
   def create(conn, %{"product" => product_params}) do
@@ -22,7 +32,17 @@ defmodule PreciderWeb.ProductController do
         |> redirect(to: ~p"/products/#{product}")
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        render(conn, :new, changeset: changeset)
+        brands = Catalog.list_brands()
+        ingredients = Catalog.list_ingredients()
+        
+        render(conn, :new,
+          changeset: changeset,
+          brand_options: Enum.map(brands, &{&1.name, &1.id}),
+          ingredients: ingredients,
+          selected_ingredient_ids: Map.get(product_params, "ingredient_ids", []),
+          ingredient_dosages: Map.get(product_params, "ingredient_dosages", %{}),
+          ingredient_units: Map.get(product_params, "ingredient_units", %{})
+        )
     end
   end
 
@@ -34,7 +54,24 @@ defmodule PreciderWeb.ProductController do
   def edit(conn, %{"id" => id}) do
     product = Catalog.get_product!(id)
     changeset = Catalog.change_product(product)
-    render(conn, :edit, product: product, changeset: changeset)
+    brands = Catalog.list_brands()
+    ingredients = Catalog.list_ingredients()
+    
+    # Get existing product ingredients
+    product_ingredients = Catalog.get_product_ingredients(product)
+    selected_ingredient_ids = Enum.map(product_ingredients, & &1.ingredient_id)
+    ingredient_dosages = Map.new(product_ingredients, &{&1.ingredient_id, &1.dosage_amount})
+    ingredient_units = Map.new(product_ingredients, &{&1.ingredient_id, &1.dosage_unit})
+    
+    render(conn, :edit,
+      product: product,
+      changeset: changeset,
+      brand_options: Enum.map(brands, &{&1.name, &1.id}),
+      ingredients: ingredients,
+      selected_ingredient_ids: selected_ingredient_ids,
+      ingredient_dosages: ingredient_dosages,
+      ingredient_units: ingredient_units
+    )
   end
 
   def update(conn, %{"id" => id, "product" => product_params}) do
@@ -47,7 +84,18 @@ defmodule PreciderWeb.ProductController do
         |> redirect(to: ~p"/products/#{product}")
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        render(conn, :edit, product: product, changeset: changeset)
+        brands = Catalog.list_brands()
+        ingredients = Catalog.list_ingredients()
+        
+        render(conn, :edit,
+          product: product,
+          changeset: changeset,
+          brand_options: Enum.map(brands, &{&1.name, &1.id}),
+          ingredients: ingredients,
+          selected_ingredient_ids: Map.get(product_params, "ingredient_ids", []),
+          ingredient_dosages: Map.get(product_params, "ingredient_dosages", %{}),
+          ingredient_units: Map.get(product_params, "ingredient_units", %{})
+        )
     end
   end
 

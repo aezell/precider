@@ -5,8 +5,8 @@ defmodule Precider.Catalog.ProductIngredient do
   alias Precider.Catalog.{Product, Ingredient}
 
   schema "product_ingredients" do
-    field :dosage_amount, :decimal
-    field :dosage_unit, :string
+    field :dosage_amount, :integer
+    field :dosage_unit, Ecto.Enum, values: [:mg, :g, :mcg]
     
     belongs_to :product, Product
     belongs_to :ingredient, Ingredient

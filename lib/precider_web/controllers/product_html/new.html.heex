@@ -4,5 +4,14 @@
     <:subtitle>Use this form to manage product records in your database.</:subtitle>
   </.header>
 
-  <.product_form changeset={@changeset} action={~p"/products"} return_to={~p"/products"} />
+  <.product_form
+    changeset={@changeset}
+    action={~p"/products"}
+    return_to={~p"/products"}
+    brand_options={@brand_options}
+    ingredients={@ingredients}
+    selected_ingredient_ids={@selected_ingredient_ids}
+    ingredient_dosages={@ingredient_dosages}
+    ingredient_units={@ingredient_units}
+  />
 </Layouts.app>

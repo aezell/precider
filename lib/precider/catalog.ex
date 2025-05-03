@@ -6,7 +6,7 @@ defmodule Precider.Catalog do
   import Ecto.Query, warn: false
   alias Precider.Repo
 
-  alias Precider.Catalog.Brand
+  alias Precider.Catalog.{Brand, Product, Ingredient, ProductIngredient}
 
   @doc """
   Returns the list of brands.
@@ -211,6 +211,7 @@ defmodule Precider.Catalog do
   """
   def list_products do
     Repo.all(Product)
+    |> Repo.preload([:brand, :product_ingredients, :ingredients])
   end
 
   @doc """
@@ -227,7 +228,10 @@ defmodule Precider.Catalog do
       ** (Ecto.NoResultsError)
 
   """
-  def get_product!(id), do: Repo.get!(Product, id)
+  def get_product!(id) do
+    Repo.get!(Product, id)
+    |> Repo.preload([:brand, :product_ingredients, :ingredients])
+  end
 
   @doc """
   Creates a product.
@@ -242,9 +246,42 @@ defmodule Precider.Catalog do
 
   """
   def create_product(attrs) do
-    %Product{}
-    |> Product.changeset(attrs)
-    |> Repo.insert()
+    Repo.transaction(fn ->
+      product_result =
+        %Product{}
+        |> Product.changeset(attrs)
+        |> Repo.insert()
+
+      case product_result do
+        {:ok, product} ->
+          ingredient_ids = Map.get(attrs, "ingredient_ids", []) |> Enum.map(&to_int/1)
+          ingredient_dosages = Map.get(attrs, "ingredient_dosages", %{})
+          ingredient_units = Map.get(attrs, "ingredient_units", %{})
+
+          Enum.each(ingredient_ids, fn ingredient_id ->
+            changeset =
+              %ProductIngredient{}
+              |> ProductIngredient.changeset(%{
+                product_id: product.id,
+                ingredient_id: ingredient_id,
+                dosage_amount: ingredient_dosages[to_string(ingredient_id)],
+                dosage_unit: ingredient_units[to_string(ingredient_id)]
+              })
+
+            case Repo.insert(changeset) do
+              {:ok, _} -> :ok
+              {:error, changeset} -> Repo.rollback(changeset)
+            end
+          end)
+
+          # Reload the product with associations
+          product = get_product!(product.id)
+          {:ok, product}
+
+        {:error, changeset} ->
+          Repo.rollback(changeset)
+      end
+    end)
   end
 
   @doc """
@@ -260,10 +297,50 @@ defmodule Precider.Catalog do
 
   """
   def update_product(%Product{} = product, attrs) do
-    product
-    |> Product.changeset(attrs)
-    |> Repo.update()
+    IO.inspect(attrs)
+    IO.inspect(product)
+    Repo.transaction(fn ->
+      product_result =
+        product
+        |> Product.changeset(attrs)
+        |> Repo.update()
+
+      case product_result do
+        {:ok, product} ->
+          Repo.delete_all(from pi in ProductIngredient, where: pi.product_id == ^product.id)
+
+          ingredient_ids = Map.get(attrs, "ingredient_ids", []) |> Enum.map(&to_int/1)
+          ingredient_dosages = Map.get(attrs, "ingredient_dosages", %{})
+          ingredient_units = Map.get(attrs, "ingredient_units", %{})
+
+          Enum.each(ingredient_ids, fn ingredient_id ->
+            changeset =
+              %ProductIngredient{}
+              |> ProductIngredient.changeset(%{
+                product_id: product.id,
+                ingredient_id: ingredient_id,
+                dosage_amount: ingredient_dosages[to_string(ingredient_id)],
+                dosage_unit: ingredient_units[to_string(ingredient_id)]
+              })
+
+            case Repo.insert(changeset) do
+              {:ok, _} -> :ok
+              {:error, changeset} -> Repo.rollback(changeset)
+            end
+          end)
+
+          # Reload the product with associations
+          product = get_product!(product.id)
+          {:ok, product}
+
+        {:error, changeset} ->
+          Repo.rollback(changeset)
+      end
+    end)
   end
+
+  defp to_int(val) when is_integer(val), do: val
+  defp to_int(val) when is_binary(val), do: String.to_integer(val)
 
   @doc """
   Deletes a product.
@@ -388,5 +465,9 @@ defmodule Precider.Catalog do
   """
   def change_product_ingredient(%ProductIngredient{} = product_ingredient, attrs \\ %{}) do
     ProductIngredient.changeset(product_ingredient, attrs)
+  end
+
+  def get_product_ingredients(%Product{} = product) do
+    Repo.all(from pi in ProductIngredient, where: pi.product_id == ^product.id)
   end
 end
