@@ -7,9 +7,14 @@ defmodule PreciderWeb.BrandController do
   def index(conn, params) do
     sort_by = String.to_existing_atom(params["sort_by"] || "name")
     sort_direction = String.to_existing_atom(params["sort_direction"] || "asc")
+    completed_filter = params["completed"]
     
-    brands = Catalog.list_brands(sort_by: sort_by, sort_direction: sort_direction)
-    render(conn, :index, brands: brands)
+    brands = Catalog.list_brands(
+      sort_by: sort_by,
+      sort_direction: sort_direction,
+      completed_filter: completed_filter
+    )
+    render(conn, :index, brands: brands, completed_filter: completed_filter)
   end
 
   def new(conn, _params) do

@@ -1,6 +1,7 @@
 <.form :let={f} for={@changeset} action={@action}>
   <.input field={f[:name]} type="text" label="Name" autofocus />
   <.input field={f[:website]} type="text" label="Website" />
+  <.input field={f[:completed]} type="checkbox" label="All products added" />
   <footer>
     <.button variant="primary">Save Brand</.button>
     <.button variant="secondary" name="save_and_new" value="true">Save and New</.button>

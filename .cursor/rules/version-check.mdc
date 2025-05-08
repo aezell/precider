@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+When suggesting code changes or making code changes, ensure that you are using the correct versions of all the modules, libraries, and other software used in the project. You can do this by ensuring the versions from the mix.exs file are being included in your context when deciding on code changes.

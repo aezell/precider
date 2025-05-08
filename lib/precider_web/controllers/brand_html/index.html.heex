@@ -8,9 +8,47 @@
     </:actions>
   </.header>
 
+  <div class="mb-4 flex items-center gap-2">
+    <span class="text-sm font-medium text-gray-700">Filter by completion:</span>
+    <.link
+      href={~p"/brands"}
+      class={[
+        "rounded-md px-3 py-2 text-sm font-medium",
+        if(@completed_filter == nil, do: "bg-gray-100 text-gray-900", else: "text-gray-500 hover:bg-gray-50")
+      ]}
+    >
+      All
+    </.link>
+    <.link
+      href={~p"/brands?completed=true"}
+      class={[
+        "rounded-md px-3 py-2 text-sm font-medium",
+        if(@completed_filter == "true", do: "bg-gray-100 text-gray-900", else: "text-gray-500 hover:bg-gray-50")
+      ]}
+    >
+      Completed
+    </.link>
+    <.link
+      href={~p"/brands?completed=false"}
+      class={[
+        "rounded-md px-3 py-2 text-sm font-medium",
+        if(@completed_filter == "false", do: "bg-gray-100 text-gray-900", else: "text-gray-500 hover:bg-gray-50")
+      ]}
+    >
+      Incomplete
+    </.link>
+  </div>
+
   <.table id="brands" rows={@brands} row_click={&JS.navigate(~p"/brands/#{&1}")}>
     <:col :let={brand} label="Name">{brand.name}</:col>
     <:col :let={brand} label="Website">{brand.website}</:col>
+    <:col :let={brand} label="Products Added">
+      <%= if brand.completed do %>
+        <.icon name="hero-check-circle" class="h-5 w-5 text-green-500" />
+      <% else %>
+        <.icon name="hero-x-circle" class="h-5 w-5 text-red-500" />
+      <% end %>
+    </:col>
     <:action :let={brand}>
       <div class="sr-only">
         <.link navigate={~p"/brands/#{brand}"}>Show</.link>

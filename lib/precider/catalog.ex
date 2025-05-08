@@ -15,6 +15,7 @@ defmodule Precider.Catalog do
 
     * `:sort_by` - The field to sort by (default: :name)
     * `:sort_direction` - The direction to sort in (:asc or :desc, default: :asc)
+    * `:completed_filter` - Filter by completion status ("true", "false", or nil for all)
 
   ## Examples
 
@@ -24,15 +25,24 @@ defmodule Precider.Catalog do
       iex> list_brands(sort_by: :name, sort_direction: :desc)
       [%Brand{}, ...]
 
+      iex> list_brands(completed_filter: "true")
+      [%Brand{}, ...]
+
   """
   def list_brands(opts \\ []) do
     sort_by = Keyword.get(opts, :sort_by, :name)
     sort_direction = Keyword.get(opts, :sort_direction, :asc)
+    completed_filter = Keyword.get(opts, :completed_filter)
 
     Brand
+    |> filter_by_completed(completed_filter)
     |> order_by([b], [{^sort_direction, ^sort_by}])
     |> Repo.all()
   end
+
+  defp filter_by_completed(query, nil), do: query
+  defp filter_by_completed(query, "true"), do: where(query, [b], b.completed == true)
+  defp filter_by_completed(query, "false"), do: where(query, [b], b.completed == false)
 
   @doc """
   Gets a single brand.

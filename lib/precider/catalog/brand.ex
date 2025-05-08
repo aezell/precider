@@ -10,6 +10,7 @@ defmodule Precider.Catalog.Brand do
     field :website, :string
     field :description, :string
     field :slug, :string
+    field :completed, :boolean, default: false
 
     has_many :products, Product
 
@@ -18,7 +19,7 @@ defmodule Precider.Catalog.Brand do
 
   def changeset(brand, attrs) do
     brand
-    |> cast(attrs, [:name, :logo_url, :website, :description, :slug])
+    |> cast(attrs, [:name, :logo_url, :website, :description, :slug, :completed])
     |> validate_required([:name])
     |> unique_constraint(:name)
     |> unique_constraint(:slug)

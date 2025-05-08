@@ -14,5 +14,13 @@
 
   <.list>
     <:item title="Name">{@brand.name}</:item>
+    <:item title="Website">{@brand.website}</:item>
+    <:item title="Products Added">
+      <%= if @brand.completed do %>
+        <.icon name="hero-check-circle" class="h-5 w-5 text-green-500" />
+      <% else %>
+        <.icon name="hero-x-circle" class="h-5 w-5 text-red-500" />
+      <% end %>
+    </:item>
   </.list>
 </Layouts.app>
