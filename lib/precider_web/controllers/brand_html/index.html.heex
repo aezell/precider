@@ -53,12 +53,46 @@
       <div class="sr-only">
         <.link navigate={~p"/brands/#{brand}"}>Show</.link>
       </div>
-      <.link navigate={~p"/brands/#{brand}/edit"}>Edit</.link>
+      <.link navigate={~p"/brands/#{brand}/edit"} class="text-gray-600 hover:text-gray-900">
+        <.icon name="hero-pencil-square" class="h-5 w-5" />
+      </.link>
     </:action>
     <:action :let={brand}>
-      <.link href={~p"/brands/#{brand}"} method="delete" data-confirm="Are you sure?">
-        Delete
-      </.link>
+      <%= if !brand.completed do %>
+        <.link navigate={~p"/products/new?brand_id=#{brand.id}"} class="text-indigo-600 hover:text-indigo-900">
+          <.icon name="hero-plus" class="h-5 w-5" />
+        </.link>
+      <% end %>
+    </:action>
+    <:action :let={brand}>
+      <button 
+        class="text-red-600 hover:text-red-900"
+        onclick={"document.getElementById('delete-modal-#{brand.id}').showModal()"}
+      >
+        <.icon name="hero-trash" class="h-5 w-5" />
+      </button>
+
+      <dialog id={"delete-modal-#{brand.id}"} class="modal">
+        <div class="modal-box">
+          <h3 class="font-bold text-lg">Delete Brand</h3>
+          <p class="py-4">Are you sure you want to delete "<%= brand.name %>"?</p>
+          <div class="modal-action">
+            <form method="dialog" class="flex gap-2">
+              <button class="btn btn-ghost">Cancel</button>
+              <.link
+                href={~p"/brands/#{brand}"}
+                method="delete"
+                class="btn btn-error"
+              >
+                Delete
+              </.link>
+            </form>
+          </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
     </:action>
   </.table>
 </Layouts.app>

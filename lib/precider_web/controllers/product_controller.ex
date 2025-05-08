@@ -9,10 +9,17 @@ defmodule PreciderWeb.ProductController do
     render(conn, :index, products: products)
   end
 
-  def new(conn, _params) do
+  def new(conn, params) do
     changeset = Catalog.change_product(%Product{})
     brands = Catalog.list_brands()
     ingredients = Catalog.list_ingredients()
+    
+    # Pre-select brand if brand_id is provided
+    changeset = if brand_id = params["brand_id"] do
+      changeset |> Ecto.Changeset.put_change(:brand_id, brand_id)
+    else
+      changeset
+    end
     
     render(conn, :new,
       changeset: changeset,
