@@ -1,10 +1,9 @@
 <.form :let={f} for={@changeset} action={@action}>
-  <.input field={f[:name]} type="text" label="Name" />
-  <.input field={f[:logo_url]} type="text" label="Logo URL" />
+  <.input field={f[:name]} type="text" label="Name" autofocus />
   <.input field={f[:website]} type="text" label="Website" />
-  <.input field={f[:description]} type="text" label="Description" />
   <footer>
     <.button variant="primary">Save Brand</.button>
+    <.button variant="secondary" name="save_and_new" value="true">Save and New</.button>
     <.button :if={@return_to} href={@return_to}>Cancel</.button>
   </footer>
 </.form>

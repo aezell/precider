@@ -4,14 +4,29 @@ defmodule PreciderWeb.BrandController do
   alias Precider.Catalog
   alias Precider.Catalog.Brand
 
-  def index(conn, _params) do
-    brands = Catalog.list_brands()
+  def index(conn, params) do
+    sort_by = String.to_existing_atom(params["sort_by"] || "name")
+    sort_direction = String.to_existing_atom(params["sort_direction"] || "asc")
+    
+    brands = Catalog.list_brands(sort_by: sort_by, sort_direction: sort_direction)
     render(conn, :index, brands: brands)
   end
 
   def new(conn, _params) do
     changeset = Catalog.change_brand(%Brand{})
     render(conn, :new, changeset: changeset)
+  end
+
+  def create(conn, %{"brand" => brand_params, "save_and_new" => "true"}) do
+    case Catalog.create_brand(brand_params) do
+      {:ok, _brand} ->
+        conn
+        |> put_flash(:info, "Brand created successfully.")
+        |> redirect(to: ~p"/brands/new")
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        render(conn, :new, changeset: changeset)
+    end
   end
 
   def create(conn, %{"brand" => brand_params}) do

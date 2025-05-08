@@ -11,14 +11,27 @@ defmodule Precider.Catalog do
   @doc """
   Returns the list of brands.
 
+  ## Options
+
+    * `:sort_by` - The field to sort by (default: :name)
+    * `:sort_direction` - The direction to sort in (:asc or :desc, default: :asc)
+
   ## Examples
 
       iex> list_brands()
       [%Brand{}, ...]
 
+      iex> list_brands(sort_by: :name, sort_direction: :desc)
+      [%Brand{}, ...]
+
   """
-  def list_brands do
-    Repo.all(Brand)
+  def list_brands(opts \\ []) do
+    sort_by = Keyword.get(opts, :sort_by, :name)
+    sort_direction = Keyword.get(opts, :sort_direction, :asc)
+
+    Brand
+    |> order_by([b], [{^sort_direction, ^sort_by}])
+    |> Repo.all()
   end
 
   @doc """
