@@ -17,7 +17,7 @@ defmodule Precider.Catalog.ProductIngredient do
   def changeset(product_ingredient, attrs) do
     product_ingredient
     |> cast(attrs, [:dosage_amount, :dosage_unit, :product_id, :ingredient_id])
-    |> validate_required([:dosage_amount, :dosage_unit, :product_id, :ingredient_id])
+    |> validate_required([:dosage_amount, :dosage_unit, :ingredient_id])
     |> foreign_key_constraint(:product_id)
     |> foreign_key_constraint(:ingredient_id)
     |> unique_constraint([:product_id, :ingredient_id], 

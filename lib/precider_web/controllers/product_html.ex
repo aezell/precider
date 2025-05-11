@@ -18,6 +18,7 @@ defmodule PreciderWeb.ProductHTML do
   attr :ingredient_units, :map, required: true
   attr :show_ingredient_modal, :boolean, default: false
   attr :ingredient_changeset, Ecto.Changeset, required: true
+  attr :ingredient_errors, :map, default: %{}
 
   def product_form(assigns) do
     assigns = assign_new(assigns, :return_to, fn -> nil end)
@@ -64,7 +65,7 @@ defmodule PreciderWeb.ProductHTML do
           </div>
           <div class="space-y-4" id="ingredients-list">
             <%= for ingredient <- @ingredients do %>
-              <div class="flex items-center space-x-3 p-4 bg-base-100 rounded-lg border border-base-300">
+              <div class="flex items-center space-x-3 p-4 bg-base-100 rounded-lg border border-base-300 ingredient-row">
                 <input
                   type="checkbox"
                   name={"product[ingredient_ids][]"}
@@ -72,27 +73,37 @@ defmodule PreciderWeb.ProductHTML do
                   checked={ingredient.id in (@selected_ingredient_ids || [])}
                   class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mr-2"
                 />
-                <label class="text-sm font-medium text-base-content mr-4 min-w-[120px]">
+                <label class="text-sm font-medium text-base-content w-[300px] truncate" title={ingredient.name}>
                   <%= ingredient.name %>
                 </label>
                 <div class="flex items-center space-x-2 flex-1">
                   <label class="block text-xs font-medium text-base-content">Dosage</label>
-                  <input
-                    type="number"
-                    step="any"
-                    name={"product[ingredient_dosages][#{ingredient.id}]"}
-                    value={get_in(@ingredient_dosages, [ingredient.id]) || ""}
-                    class="ml-1 w-24 rounded-md border-base-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base-content bg-base-100 placeholder:text-base-content/70"
-                    placeholder="Amount"
-                  />
-                  <select
-                    name={"product[ingredient_units][#{ingredient.id}]"}
-                    class="w-16 rounded-md border-base-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base-content bg-base-100"
-                  >
-                    <option value="mg" selected={get_in(@ingredient_units, [ingredient.id]) in [nil, "", "mg"]}>mg</option>
-                    <option value="g" selected={get_in(@ingredient_units, [ingredient.id]) == "g"}>g</option>
-                    <option value="mcg" selected={get_in(@ingredient_units, [ingredient.id]) == "mcg"}>mcg</option>
-                  </select>
+                  <div class="flex flex-col">
+                    <input
+                      type="number"
+                      step="any"
+                      name={"product[ingredient_dosages][#{ingredient.id}]"}
+                      value={get_in(@ingredient_dosages, [ingredient.id]) || ""}
+                      class={"ml-1 w-24 rounded-md border-base-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base-content bg-base-100 placeholder:text-base-content/70 #{if Map.has_key?(@ingredient_errors, ingredient.id), do: "border-red-500", else: ""}"}
+                      placeholder="Amount"
+                    />
+                    <%= if errors = get_in(@ingredient_errors, [ingredient.id, :dosage_amount]) do %>
+                      <span class="text-xs text-red-500 mt-1"><%= elem(errors, 0) %></span>
+                    <% end %>
+                  </div>
+                  <div class="flex flex-col">
+                    <select
+                      name={"product[ingredient_units][#{ingredient.id}]"}
+                      class={"w-16 rounded-md border-base-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base-content bg-base-100 #{if Map.has_key?(@ingredient_errors, ingredient.id), do: "border-red-500", else: ""}"}
+                    >
+                      <option value="mg" selected={get_in(@ingredient_units, [ingredient.id]) in [nil, "", "mg"]}>mg</option>
+                      <option value="g" selected={get_in(@ingredient_units, [ingredient.id]) == "g"}>g</option>
+                      <option value="mcg" selected={get_in(@ingredient_units, [ingredient.id]) == "mcg"}>mcg</option>
+                    </select>
+                    <%= if errors = get_in(@ingredient_errors, [ingredient.id, :dosage_unit]) do %>
+                      <span class="text-xs text-red-500 mt-1"><%= elem(errors, 0) %></span>
+                    <% end %>
+                  </div>
                 </div>
               </div>
             <% end %>
@@ -150,6 +161,25 @@ defmodule PreciderWeb.ProductHTML do
         const ingredientForm = document.getElementById('ingredient-form');
         const ingredientsList = document.getElementById('ingredients-list');
 
+        // Add checkbox change handlers
+        function setupCheckboxHandlers() {
+          const checkboxes = document.querySelectorAll('input[type="checkbox"][name="product[ingredient_ids][]"]');
+          checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+              const ingredientRow = this.closest('.ingredient-row');
+              if (this.checked) {
+                ingredientRow.classList.add('ingredient-selected');
+              } else {
+                ingredientRow.classList.remove('ingredient-selected');
+              }
+            });
+            // Set initial state
+            if (checkbox.checked) {
+              checkbox.closest('.ingredient-row').classList.add('ingredient-selected');
+            }
+          });
+        }
+
         openButton.addEventListener('click', function() {
           modal.classList.remove('hidden');
         });
@@ -180,7 +210,7 @@ defmodule PreciderWeb.ProductHTML do
               
               // Create new ingredient element
               const ingredientElement = document.createElement('div');
-              ingredientElement.className = 'flex items-center space-x-3 p-4 bg-base-100 rounded-lg border border-green-500 ingredient-highlight';
+              ingredientElement.className = 'flex items-center space-x-3 p-4 bg-base-100 rounded-lg border border-green-500 ingredient-highlight ingredient-row';
               ingredientElement.innerHTML = `
                 <input
                   type="checkbox"
@@ -188,7 +218,7 @@ defmodule PreciderWeb.ProductHTML do
                   value="${data.ingredient.id}"
                   class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mr-2"
                 />
-                <label class="text-sm font-medium text-base-content mr-4 min-w-[120px]">
+                <label class="text-sm font-medium text-base-content w-[300px] truncate" title="${data.ingredient.name}">
                   ${data.ingredient.name}
                 </label>
                 <div class="flex items-center space-x-2 flex-1">
@@ -227,7 +257,8 @@ defmodule PreciderWeb.ProductHTML do
                 ingredientsList.appendChild(ingredientElement);
               }
 
-              // Remove highlight timer (border stays)
+              // Setup checkbox handler for the new ingredient
+              setupCheckboxHandlers();
             } else {
               // Handle error
               const data = await response.json();
@@ -238,12 +269,19 @@ defmodule PreciderWeb.ProductHTML do
             alert('Error creating ingredient. Please try again.');
           }
         });
+
+        // Initial setup of checkbox handlers
+        setupCheckboxHandlers();
       });
     </script>
     <style>
       .ingredient-highlight {
         border-width: 2px !important;
         border-color: #22c55e !important; /* Tailwind green-500 */
+      }
+      .ingredient-selected {
+        border-color: #eab308 !important; /* Tailwind yellow-500 */
+        border-width: 2px !important;
       }
     </style>
     """

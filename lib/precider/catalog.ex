@@ -278,46 +278,32 @@ defmodule Precider.Catalog do
 
   """
   def create_product(attrs) do
-    Repo.transaction(fn ->
-      product_result =
-        %Product{}
-        |> Product.changeset(attrs)
-        |> Repo.insert()
+    # Transform the ingredient data into the format expected by cast_assoc
+    attrs = if Map.has_key?(attrs, "ingredient_ids") do
+      product_ingredients = attrs
+        |> Map.get("ingredient_ids", [])
+        |> Enum.map(fn ingredient_id ->
+          unit = Map.get(attrs["ingredient_units"] || %{}, ingredient_id) || "mg"
+          unit = String.to_existing_atom(unit)
+          dosage = Map.get(attrs["ingredient_dosages"] || %{}, ingredient_id)
 
-      case product_result do
-        {:ok, product} ->
-          ingredient_ids = Map.get(attrs, "ingredient_ids", []) |> Enum.map(&to_int/1)
-          ingredient_dosages = Map.get(attrs, "ingredient_dosages", %{})
-          ingredient_units = Map.get(attrs, "ingredient_units", %{})
+          %{
+            "ingredient_id" => ingredient_id,
+            "dosage_amount" => dosage,
+            "dosage_unit" => unit
+          }
+        end)
 
-          Enum.each(ingredient_ids, fn ingredient_id ->
-            changeset =
-              %ProductIngredient{}
-              |> ProductIngredient.changeset(%{
-                product_id: product.id,
-                ingredient_id: ingredient_id,
-                dosage_amount: ingredient_dosages[to_string(ingredient_id)],
-                dosage_unit: ingredient_units[to_string(ingredient_id)]
-              })
-
-            case Repo.insert(changeset) do
-              {:ok, _} -> :ok
-              {:error, changeset} -> Repo.rollback(changeset)
-            end
-          end)
-
-          # Reload the product with associations
-          product = get_product!(product.id)
-          {:ok, product}
-
-        {:error, changeset} ->
-          Repo.rollback(changeset)
-      end
-    end)
-    |> case do
-      {:ok, result} -> result
-      {:error, reason} -> {:error, reason}
+      Map.put(attrs, "product_ingredients", product_ingredients)
+    else
+      attrs
     end
+
+    IO.inspect(attrs)
+
+    %Product{}
+    |> Product.changeset(attrs)
+    |> Repo.insert()
   end
 
   @doc """
@@ -333,50 +319,31 @@ defmodule Precider.Catalog do
 
   """
   def update_product(%Product{} = product, attrs) do
-    IO.inspect(attrs)
-    IO.inspect(product)
-    Repo.transaction(fn ->
-      product_result =
-        product
-        |> Product.changeset(attrs)
-        |> Repo.update()
+    # Transform the ingredient data into the format expected by cast_assoc
+    attrs = if Map.has_key?(attrs, "ingredient_ids") do
+      product_ingredients = attrs
+        |> Map.get("ingredient_ids", [])
+        |> Enum.map(fn ingredient_id ->
+          unit = Map.get(attrs["ingredient_units"] || %{}, ingredient_id) || "mg"
+          unit = String.to_existing_atom(unit)
+          dosage = Map.get(attrs["ingredient_dosages"] || %{}, ingredient_id)
 
-      case product_result do
-        {:ok, product} ->
-          Repo.delete_all(from pi in ProductIngredient, where: pi.product_id == ^product.id)
+          %{
+            "ingredient_id" => ingredient_id,
+            "dosage_amount" => dosage,
+            "dosage_unit" => unit
+          }
+        end)
 
-          ingredient_ids = Map.get(attrs, "ingredient_ids", []) |> Enum.map(&to_int/1)
-          ingredient_dosages = Map.get(attrs, "ingredient_dosages", %{})
-          ingredient_units = Map.get(attrs, "ingredient_units", %{})
+      Map.put(attrs, "product_ingredients", product_ingredients)
+    else
+      attrs
+    end
 
-          Enum.each(ingredient_ids, fn ingredient_id ->
-            changeset =
-              %ProductIngredient{}
-              |> ProductIngredient.changeset(%{
-                product_id: product.id,
-                ingredient_id: ingredient_id,
-                dosage_amount: ingredient_dosages[to_string(ingredient_id)],
-                dosage_unit: ingredient_units[to_string(ingredient_id)]
-              })
-
-            case Repo.insert(changeset) do
-              {:ok, _} -> :ok
-              {:error, changeset} -> Repo.rollback(changeset)
-            end
-          end)
-
-          # Reload the product with associations
-          product = get_product!(product.id)
-          {:ok, product}
-
-        {:error, changeset} ->
-          Repo.rollback(changeset)
-      end
-    end)
+    product
+    |> Product.changeset(attrs)
+    |> Repo.update()
   end
-
-  defp to_int(val) when is_integer(val), do: val
-  defp to_int(val) when is_binary(val), do: String.to_integer(val)
 
   @doc """
   Deletes a product.

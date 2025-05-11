@@ -17,7 +17,7 @@ defmodule Precider.Catalog.Product do
     field :slug, :string
 
     belongs_to :brand, Brand
-    has_many :product_ingredients, ProductIngredient
+    has_many :product_ingredients, ProductIngredient, on_replace: :delete
     has_many :ingredients, through: [:product_ingredients, :ingredient]
 
     timestamps()
@@ -32,6 +32,7 @@ defmodule Precider.Catalog.Product do
     |> foreign_key_constraint(:brand_id)
     |> unique_constraint([:name, :brand_id])
     |> unique_constraint(:slug)
+    |> cast_assoc(:product_ingredients, with: &ProductIngredient.changeset/2)
     |> put_slug()
   end
 
