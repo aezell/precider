@@ -285,7 +285,11 @@ defmodule Precider.Catalog do
         |> Enum.map(fn ingredient_id ->
           unit = Map.get(attrs["ingredient_units"] || %{}, ingredient_id) || "mg"
           unit = String.to_existing_atom(unit)
-          dosage = Map.get(attrs["ingredient_dosages"] || %{}, ingredient_id)
+          dosage = case Map.get(attrs["ingredient_dosages"] || %{}, ingredient_id) do
+            "" -> nil
+            nil -> nil
+            value -> Decimal.new(to_string(value))
+          end
 
           %{
             "ingredient_id" => ingredient_id,
@@ -298,8 +302,6 @@ defmodule Precider.Catalog do
     else
       attrs
     end
-
-    IO.inspect(attrs)
 
     %Product{}
     |> Product.changeset(attrs)
@@ -326,7 +328,11 @@ defmodule Precider.Catalog do
         |> Enum.map(fn ingredient_id ->
           unit = Map.get(attrs["ingredient_units"] || %{}, ingredient_id) || "mg"
           unit = String.to_existing_atom(unit)
-          dosage = Map.get(attrs["ingredient_dosages"] || %{}, ingredient_id)
+          dosage = case Map.get(attrs["ingredient_dosages"] || %{}, ingredient_id) do
+            "" -> nil
+            nil -> nil
+            value -> Decimal.new(to_string(value))
+          end
 
           %{
             "ingredient_id" => ingredient_id,
