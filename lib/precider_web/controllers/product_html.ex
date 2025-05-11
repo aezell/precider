@@ -62,7 +62,7 @@ defmodule PreciderWeb.ProductHTML do
               Add Ingredient
             </button>
           </div>
-          <div class="space-y-4">
+          <div class="space-y-4" id="ingredients-list">
             <%= for ingredient <- @ingredients do %>
               <div class="flex items-center space-x-3 p-4 bg-base-100 rounded-lg border border-base-300">
                 <input
@@ -148,6 +148,7 @@ defmodule PreciderWeb.ProductHTML do
         const openButton = document.querySelector('[phx-click="open_ingredient_modal"]');
         const closeButton = document.querySelector('[phx-click="close_ingredient_modal"]');
         const ingredientForm = document.getElementById('ingredient-form');
+        const ingredientsList = document.getElementById('ingredients-list');
 
         openButton.addEventListener('click', function() {
           modal.classList.remove('hidden');
@@ -172,11 +173,61 @@ defmodule PreciderWeb.ProductHTML do
             });
 
             if (response.ok) {
+              const data = await response.json();
+              
               // Close the modal
               modal.classList.add('hidden');
               
-              // Reload the page to show the new ingredient
-              window.location.reload();
+              // Create new ingredient element
+              const ingredientElement = document.createElement('div');
+              ingredientElement.className = 'flex items-center space-x-3 p-4 bg-base-100 rounded-lg border border-green-500 ingredient-highlight';
+              ingredientElement.innerHTML = `
+                <input
+                  type="checkbox"
+                  name="product[ingredient_ids][]"
+                  value="${data.ingredient.id}"
+                  class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mr-2"
+                />
+                <label class="text-sm font-medium text-base-content mr-4 min-w-[120px]">
+                  ${data.ingredient.name}
+                </label>
+                <div class="flex items-center space-x-2 flex-1">
+                  <label class="block text-xs font-medium text-base-content">Dosage</label>
+                  <input
+                    type="number"
+                    step="any"
+                    name="product[ingredient_dosages][${data.ingredient.id}]"
+                    class="ml-1 w-24 rounded-md border-base-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base-content bg-base-100 placeholder:text-base-content/70"
+                    placeholder="Amount"
+                  />
+                  <select
+                    name="product[ingredient_units][${data.ingredient.id}]"
+                    class="w-16 rounded-md border-base-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base-content bg-base-100"
+                  >
+                    <option value="mg" selected>mg</option>
+                    <option value="g">g</option>
+                    <option value="mcg">mcg</option>
+                  </select>
+                </div>
+              `;
+
+              // Insert alphabetically
+              const ingredientRows = Array.from(ingredientsList.children);
+              const newName = data.ingredient.name.toLowerCase();
+              let inserted = false;
+              for (let i = 0; i < ingredientRows.length; i++) {
+                const label = ingredientRows[i].querySelector('label');
+                if (label && label.textContent.trim().toLowerCase() > newName) {
+                  ingredientsList.insertBefore(ingredientElement, ingredientRows[i]);
+                  inserted = true;
+                  break;
+                }
+              }
+              if (!inserted) {
+                ingredientsList.appendChild(ingredientElement);
+              }
+
+              // Remove highlight timer (border stays)
             } else {
               // Handle error
               const data = await response.json();
@@ -189,6 +240,12 @@ defmodule PreciderWeb.ProductHTML do
         });
       });
     </script>
+    <style>
+      .ingredient-highlight {
+        border-width: 2px !important;
+        border-color: #22c55e !important; /* Tailwind green-500 */
+      }
+    </style>
     """
   end
 end

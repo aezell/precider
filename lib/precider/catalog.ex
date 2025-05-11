@@ -314,6 +314,10 @@ defmodule Precider.Catalog do
           Repo.rollback(changeset)
       end
     end)
+    |> case do
+      {:ok, result} -> result
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   @doc """

@@ -3,7 +3,6 @@ defmodule PreciderWeb.ProductController do
 
   alias Precider.Catalog
   alias Precider.Catalog.{Product, Ingredient}
-  import Ecto.Changeset, only: [traverse_errors: 2]
 
   def index(conn, _params) do
     products = Catalog.list_products()
@@ -143,7 +142,15 @@ defmodule PreciderWeb.ProductController do
       {:ok, ingredient} ->
         conn
         |> put_resp_content_type("application/json")
-        |> send_resp(200, Jason.encode!(%{success: true, ingredient: ingredient}))
+        |> send_resp(200, Jason.encode!(%{
+          success: true,
+          ingredient: %{
+            id: ingredient.id,
+            name: ingredient.name,
+            description: ingredient.description,
+            benefits: ingredient.benefits
+          }
+        }))
 
       {:error, %Ecto.Changeset{} = changeset} ->
         conn
