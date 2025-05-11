@@ -1,6 +1,8 @@
 defmodule PreciderWeb.ProductHTML do
   use PreciderWeb, :html
 
+  import PreciderWeb.CoreComponents
+
   embed_templates "product_html/*"
 
   @doc """
@@ -14,8 +16,12 @@ defmodule PreciderWeb.ProductHTML do
   attr :selected_ingredient_ids, :list, required: true
   attr :ingredient_dosages, :map, required: true
   attr :ingredient_units, :map, required: true
+  attr :show_ingredient_modal, :boolean, default: false
+  attr :ingredient_changeset, Ecto.Changeset, required: true
 
   def product_form(assigns) do
+    assigns = assign_new(assigns, :return_to, fn -> nil end)
+    
     ~H"""
     <.form :let={f} for={@changeset} action={@action} class="space-y-8">
       <div class="space-y-4">
@@ -38,19 +44,24 @@ defmodule PreciderWeb.ProductHTML do
         </div>
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <.input field={f[:flavor]} type="text" label="Flavor" />
           <.input field={f[:weight_in_grams]} type="number" label="Weight (g)" />
-        </div>
-
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <.input field={f[:release_date]} type="date" label="Release Date" />
           <.input field={f[:is_active]} type="checkbox" label="Active" />
         </div>
       </div>
 
       <div class="space-y-4">
         <fieldset class="space-y-4">
-          <legend class="text-lg font-medium leading-6 text-white-900">Ingredients</legend>
+          <div class="flex items-center justify-between">
+            <legend class="text-lg font-medium leading-6 text-white-900">Ingredients</legend>
+            <button
+              type="button"
+              phx-click="open_ingredient_modal"
+              class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              <.icon name="hero-plus" class="h-4 w-4 mr-1" />
+              Add Ingredient
+            </button>
+          </div>
           <div class="space-y-4">
             <%= for ingredient <- @ingredients do %>
               <div class="flex items-center space-x-3 p-4 bg-base-100 rounded-lg border border-base-300">
@@ -94,6 +105,90 @@ defmodule PreciderWeb.ProductHTML do
         <.button type="submit" variant="primary">Save Product</.button>
       </div>
     </.form>
+
+    <div id="ingredient-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+      <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-base-100 text-base-content rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+          <div class="bg-base-100 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <.form :let={f} for={@ingredient_changeset} action={~p"/api/products/new/create_ingredient"} class="space-y-4" id="ingredient-form">
+              <input type="hidden" name="return_to" value={@action} />
+              <div>
+                <label class="label">
+                  <span class="label-text">Name</span>
+                </label>
+                <.input field={f[:name]} type="text" class="input input-bordered w-full" required />
+              </div>
+              <div>
+                <label class="label">
+                  <span class="label-text">Description</span>
+                </label>
+                <.input field={f[:description]} type="textarea" rows="4" class="textarea textarea-bordered w-full" />
+              </div>
+              <div>
+                <label class="label">
+                  <span class="label-text">Benefits</span>
+                </label>
+                <.input field={f[:benefits]} type="textarea" rows="4" class="textarea textarea-bordered w-full" />
+              </div>
+              <div class="mt-6 flex justify-end space-x-3">
+                <button type="button" phx-click="close_ingredient_modal" class="btn btn-ghost">Cancel</button>
+                <.button type="submit" class="btn btn-primary">Save Ingredient</.button>
+              </div>
+            </.form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('ingredient-modal');
+        const openButton = document.querySelector('[phx-click="open_ingredient_modal"]');
+        const closeButton = document.querySelector('[phx-click="close_ingredient_modal"]');
+        const ingredientForm = document.getElementById('ingredient-form');
+
+        openButton.addEventListener('click', function() {
+          modal.classList.remove('hidden');
+        });
+
+        closeButton.addEventListener('click', function() {
+          modal.classList.add('hidden');
+        });
+
+        ingredientForm.addEventListener('submit', async function(e) {
+          e.preventDefault();
+          
+          const formData = new FormData(ingredientForm);
+          
+          try {
+            const response = await fetch(ingredientForm.action, {
+              method: 'POST',
+              body: formData,
+              headers: {
+                'Accept': 'application/json'
+              }
+            });
+
+            if (response.ok) {
+              // Close the modal
+              modal.classList.add('hidden');
+              
+              // Reload the page to show the new ingredient
+              window.location.reload();
+            } else {
+              // Handle error
+              const data = await response.json();
+              alert('Error creating ingredient: ' + (data.errors || 'Unknown error'));
+            }
+          } catch (error) {
+            console.error('Error:', error);
+            alert('Error creating ingredient. Please try again.');
+          }
+        });
+      });
+    </script>
     """
   end
 end

@@ -12,9 +12,7 @@ defmodule Precider.Catalog.Product do
     field :price, :decimal
     field :serving_size, :string
     field :servings_per_container, :integer
-    field :flavor, :string
     field :weight_in_grams, :integer
-    field :release_date, :date
     field :is_active, :boolean, default: true
     field :slug, :string
 
@@ -28,8 +26,8 @@ defmodule Precider.Catalog.Product do
   def changeset(product, attrs) do
     product
     |> cast(attrs, [:name, :description, :url, :image_url, :price, :serving_size, 
-                    :servings_per_container, :flavor, :weight_in_grams, 
-                    :release_date, :is_active, :brand_id, :slug])
+                    :servings_per_container, :weight_in_grams, 
+                    :is_active, :brand_id, :slug])
     |> validate_required([:name, :price, :brand_id])
     |> foreign_key_constraint(:brand_id)
     |> unique_constraint([:name, :brand_id])

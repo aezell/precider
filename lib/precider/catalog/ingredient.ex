@@ -4,6 +4,7 @@ defmodule Precider.Catalog.Ingredient do
 
   alias Precider.Catalog.ProductIngredient
 
+  @derive {Jason.Encoder, only: [:id, :name, :description, :benefits, :slug]}
   schema "ingredients" do
     field :name, :string
     field :description, :string

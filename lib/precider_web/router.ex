@@ -21,8 +21,9 @@ defmodule PreciderWeb.Router do
     pipe_through :browser
 
     resources "/brands", BrandController
-    resources "/ingredients", IngredientController
+    get "/products/new/open_ingredient_modal", ProductController, :open_ingredient_modal
     resources "/products", ProductController
+    resources "/ingredients", IngredientController
     resources "/product_ingredients", ProductIngredientController
     get "/import", ImportController, :index
     get "/", PageController, :home
@@ -33,6 +34,7 @@ defmodule PreciderWeb.Router do
     pipe_through :api
     
     post "/import", ImportController, :import
+    post "/products/new/create_ingredient", ProductController, :create_ingredient
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
