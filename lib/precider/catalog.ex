@@ -35,14 +35,16 @@ defmodule Precider.Catalog do
     completed_filter = Keyword.get(opts, :completed_filter)
 
     Brand
-    |> filter_by_completed(completed_filter)
+    |> maybe_filter_completed(completed_filter)
     |> order_by([b], [{^sort_direction, ^sort_by}])
     |> Repo.all()
   end
 
-  defp filter_by_completed(query, nil), do: query
-  defp filter_by_completed(query, "true"), do: where(query, [b], b.completed == true)
-  defp filter_by_completed(query, "false"), do: where(query, [b], b.completed == false)
+  defp maybe_filter_completed(query, nil), do: query
+  defp maybe_filter_completed(query, completed) when is_binary(completed) do
+    completed = completed == "true"
+    from b in query, where: b.completed == ^completed
+  end
 
   @doc """
   Gets a single brand.
@@ -205,7 +207,12 @@ defmodule Precider.Catalog do
 
   """
   def delete_ingredient(%Ingredient{} = ingredient) do
-    Repo.delete(ingredient)
+    Repo.transaction(fn ->
+      # First delete all associated product_ingredients
+      Repo.delete_all(from pi in ProductIngredient, where: pi.ingredient_id == ^ingredient.id)
+      # Then delete the ingredient
+      Repo.delete(ingredient)
+    end)
   end
 
   @doc """
@@ -491,6 +498,14 @@ defmodule Precider.Catalog do
   end
 
   def get_product_ingredients(%Product{} = product) do
-    Repo.all(from pi in ProductIngredient, where: pi.product_id == ^product.id)
+    from(pi in ProductIngredient,
+      where: pi.product_id == ^product.id,
+      preload: [:ingredient]
+    )
+    |> Repo.all()
+  end
+
+  def get_brand_by_name(name) do
+    Repo.get_by(Brand, name: name)
   end
 end

@@ -7,7 +7,6 @@ defmodule Precider.Catalog.Ingredient do
   schema "ingredients" do
     field :name, :string
     field :description, :string
-    field :common_dosage, :string
     field :benefits, :string
     field :slug, :string
 
@@ -19,7 +18,7 @@ defmodule Precider.Catalog.Ingredient do
 
   def changeset(ingredient, attrs) do
     ingredient
-    |> cast(attrs, [:name, :description, :common_dosage, :benefits, :slug])
+    |> cast(attrs, [:name, :description, :benefits, :slug])
     |> validate_required([:name])
     |> unique_constraint(:name)
     |> unique_constraint(:slug)

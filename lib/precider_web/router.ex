@@ -24,14 +24,16 @@ defmodule PreciderWeb.Router do
     resources "/ingredients", IngredientController
     resources "/products", ProductController
     resources "/product_ingredients", ProductIngredientController
+    get "/import", ImportController, :index
     get "/", PageController, :home
-    
   end
 
   # Other scopes may use custom stacks.
-  # scope "/api", PreciderWeb do
-  #   pipe_through :api
-  # end
+  scope "/api", PreciderWeb do
+    pipe_through :api
+    
+    post "/import", ImportController, :import
+  end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:precider, :dev_routes) do
