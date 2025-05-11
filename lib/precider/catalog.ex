@@ -139,7 +139,9 @@ defmodule Precider.Catalog do
 
   """
   def list_ingredients do
-    Repo.all(Ingredient)
+    Ingredient
+    |> order_by([i], asc: i.name)
+    |> Repo.all()
   end
 
   @doc """

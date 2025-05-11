@@ -8,18 +8,30 @@
     </:actions>
   </.header>
 
-  <.table id="ingredients" rows={@ingredients} row_click={&JS.navigate(~p"/ingredients/#{&1}")}>
-    <:col :let={ingredient} label="Name">{ingredient.name}</:col>
-    <:action :let={ingredient}>
-      <div class="sr-only">
-        <.link navigate={~p"/ingredients/#{ingredient}"}>Show</.link>
-      </div>
-      <.link navigate={~p"/ingredients/#{ingredient}/edit"}>Edit</.link>
-    </:action>
-    <:action :let={ingredient}>
-      <.link href={~p"/ingredients/#{ingredient}"} method="delete" data-confirm="Are you sure?">
-        Delete
-      </.link>
-    </:action>
-  </.table>
+  <div class="w-full px-0">
+    <.table id="ingredients" rows={@ingredients} row_click={&JS.navigate(~p"/ingredients/#{&1}")}>
+      <:col :let={ingredient} label="Name">{ingredient.name}</:col>
+      <:col :let={ingredient} label="Description">
+        <div class="truncate max-w-xl" title={ingredient.description}>
+          <%= ingredient.description %>
+        </div>
+      </:col>
+      <:col :let={ingredient} label="Benefits">
+        <div class="truncate max-w-xl" title={ingredient.benefits}>
+          <%= ingredient.benefits %>
+        </div>
+      </:col>
+      <:action :let={ingredient}>
+        <div class="sr-only">
+          <.link navigate={~p"/ingredients/#{ingredient}"}>Show</.link>
+        </div>
+        <.link navigate={~p"/ingredients/#{ingredient}/edit"}>Edit</.link>
+      </:action>
+      <:action :let={ingredient}>
+        <.link href={~p"/ingredients/#{ingredient}"} method="delete" data-confirm="Are you sure?">
+          Delete
+        </.link>
+      </:action>
+    </.table>
+  </div>
 </Layouts.app>
