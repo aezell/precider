@@ -284,7 +284,7 @@ defmodule Precider.Catalog do
         |> Map.get("ingredient_ids", [])
         |> Enum.map(fn ingredient_id ->
           unit = Map.get(attrs["ingredient_units"] || %{}, ingredient_id) || "mg"
-          unit = String.to_existing_atom(unit)
+          unit = String.to_atom(unit)
           dosage = case Map.get(attrs["ingredient_dosages"] || %{}, ingredient_id) do
             "" -> nil
             nil -> nil
@@ -327,7 +327,7 @@ defmodule Precider.Catalog do
         |> Map.get("ingredient_ids", [])
         |> Enum.map(fn ingredient_id ->
           unit = Map.get(attrs["ingredient_units"] || %{}, ingredient_id) || "mg"
-          unit = String.to_existing_atom(unit)
+          unit = String.to_atom(unit)
           dosage = case Map.get(attrs["ingredient_dosages"] || %{}, ingredient_id) do
             "" -> nil
             nil -> nil

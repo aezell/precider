@@ -52,6 +52,11 @@ defmodule PreciderWeb.ProductHTML do
         <fieldset class="space-y-4">
           <legend class="text-lg font-medium text-base-content">Ingredients</legend>
           <div class="space-y-4">
+            <div class="flex justify-end">
+              <.button phx-click="open_ingredient_modal" type="button" variant="secondary">
+                <.icon name="hero-plus" /> Add Ingredient
+              </.button>
+            </div>
             <%= for ingredient <- @ingredients do %>
               <div class="flex items-center space-x-3 p-4 bg-base-100 rounded-lg border border-base-300 ingredient-row">
                 <input
