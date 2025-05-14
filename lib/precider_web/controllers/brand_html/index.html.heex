@@ -39,9 +39,13 @@
     </.link>
   </div>
 
-  <.table id="brands" rows={@brands} row_click={&JS.navigate(~p"/brands/#{&1}")}>
+  <.table id="brands" rows={@brands}>
     <:col :let={brand} label="Name">{brand.name}</:col>
-    <:col :let={brand} label="Website">{brand.website}</:col>
+    <:col :let={brand} label="Website">
+      <%= if brand.website do %>
+        <.link href={brand.website} target="_blank" rel="noopener noreferrer">{brand.website}</.link>
+      <% end %>
+    </:col>
     <:col :let={brand} label="Products Added">
       <%= if brand.completed do %>
         <.icon name="hero-check-circle" class="h-5 w-5 text-green-500" />
@@ -50,9 +54,11 @@
       <% end %>
     </:col>
     <:action :let={brand}>
-      <div class="sr-only">
-        <.link navigate={~p"/brands/#{brand}"}>Show</.link>
-      </div>
+      <.link navigate={~p"/brands/#{brand}"} class="text-gray-600 hover:text-gray-900">
+        <.icon name="hero-eye" class="h-5 w-5" />
+      </.link>
+    </:action>
+    <:action :let={brand}>
       <.link navigate={~p"/brands/#{brand}/edit"} class="text-gray-600 hover:text-gray-900">
         <.icon name="hero-pencil-square" class="h-5 w-5" />
       </.link>
