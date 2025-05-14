@@ -79,4 +79,13 @@ defmodule PreciderWeb.BrandController do
     |> put_flash(:info, "Brand deleted successfully.")
     |> redirect(to: ~p"/brands")
   end
+
+  def toggle_completed(conn, %{"id" => id}) do
+    brand = Catalog.get_brand!(id)
+    {:ok, _brand} = Catalog.update_brand(brand, %{completed: !brand.completed})
+
+    conn
+    |> put_flash(:info, "Brand updated successfully.")
+    |> redirect(to: ~p"/brands")
+  end
 end

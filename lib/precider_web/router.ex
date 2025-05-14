@@ -21,6 +21,7 @@ defmodule PreciderWeb.Router do
     pipe_through :browser
 
     resources "/brands", BrandController
+    post "/brands/:id/toggle_completed", BrandController, :toggle_completed
     get "/products/new/open_ingredient_modal", ProductController, :open_ingredient_modal
     resources "/products", ProductController
     resources "/ingredients", IngredientController

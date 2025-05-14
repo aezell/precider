@@ -47,11 +47,20 @@
       <% end %>
     </:col>
     <:col :let={brand} label="Products Added">
-      <%= if brand.completed do %>
-        <.icon name="hero-check-circle" class="h-5 w-5 text-green-500" />
-      <% else %>
-        <.icon name="hero-x-circle" class="h-5 w-5 text-red-500" />
-      <% end %>
+      <.link
+        href={~p"/brands/#{brand.id}/toggle_completed"}
+        method="post"
+        class={[
+          "inline-flex items-center rounded-full p-1",
+          if(brand.completed, do: "text-green-500 hover:text-green-600", else: "text-red-500 hover:text-red-600")
+        ]}
+      >
+        <%= if brand.completed do %>
+          <.icon name="hero-check-circle" class="h-5 w-5" />
+        <% else %>
+          <.icon name="hero-x-circle" class="h-5 w-5" />
+        <% end %>
+      </.link>
     </:col>
     <:action :let={brand}>
       <.link navigate={~p"/brands/#{brand}"} class="text-gray-600 hover:text-gray-900">
