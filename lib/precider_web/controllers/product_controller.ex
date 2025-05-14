@@ -206,22 +206,20 @@ defmodule PreciderWeb.ProductController do
   def create_ingredient(conn, %{"ingredient" => ingredient_params, "return_to" => _return_to}) do
     case Catalog.create_ingredient(ingredient_params) do
       {:ok, ingredient} ->
-        conn
-        |> put_resp_content_type("application/json")
-        |> send_resp(200, Jason.encode!(%{
+        json(conn, %{
           success: true,
           ingredient: %{
             id: ingredient.id,
             name: ingredient.name,
-            description: ingredient.description,
-            benefits: ingredient.benefits
+            description: ingredient.description || "",
+            benefits: ingredient.benefits || ""
           }
-        }))
+        })
 
       {:error, %Ecto.Changeset{} = changeset} ->
         conn
-        |> put_resp_content_type("application/json")
-        |> send_resp(422, Jason.encode!(%{success: false, errors: translate_errors(changeset)}))
+        |> put_status(:unprocessable_entity)
+        |> json(%{success: false, errors: translate_errors(changeset)})
     end
   end
 
