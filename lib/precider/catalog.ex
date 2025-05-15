@@ -279,22 +279,19 @@ defmodule Precider.Catalog do
   """
   def create_product(attrs) do
     # Transform the ingredient data into the format expected by cast_assoc
-    attrs = if Map.has_key?(attrs, "ingredient_ids") do
+    attrs = if Map.has_key?(attrs, "ingredients") do
       product_ingredients = attrs
-        |> Map.get("ingredient_ids", [])
-        |> Enum.map(fn ingredient_id ->
-          unit = Map.get(attrs["ingredient_units"] || %{}, ingredient_id) || "mg"
-          unit = String.to_atom(unit)
-          dosage = case Map.get(attrs["ingredient_dosages"] || %{}, ingredient_id) do
-            "" -> nil
-            nil -> nil
-            value -> Decimal.new(to_string(value))
-          end
-
+        |> Map.get("ingredients", %{})
+        |> Map.values()
+        |> Enum.map(fn ingredient ->
           %{
-            "ingredient_id" => ingredient_id,
-            "dosage_amount" => dosage,
-            "dosage_unit" => unit
+            "ingredient_id" => ingredient["ingredient_id"],
+            "dosage_amount" => case ingredient["dosage"] do
+              "" -> nil
+              nil -> nil
+              value -> Decimal.new(to_string(value))
+            end,
+            "dosage_unit" => String.to_atom(ingredient["unit"] || "mg")
           }
         end)
 
@@ -322,22 +319,19 @@ defmodule Precider.Catalog do
   """
   def update_product(%Product{} = product, attrs) do
     # Transform the ingredient data into the format expected by cast_assoc
-    attrs = if Map.has_key?(attrs, "ingredient_ids") do
+    attrs = if Map.has_key?(attrs, "ingredients") do
       product_ingredients = attrs
-        |> Map.get("ingredient_ids", [])
-        |> Enum.map(fn ingredient_id ->
-          unit = Map.get(attrs["ingredient_units"] || %{}, ingredient_id) || "mg"
-          unit = String.to_atom(unit)
-          dosage = case Map.get(attrs["ingredient_dosages"] || %{}, ingredient_id) do
-            "" -> nil
-            nil -> nil
-            value -> Decimal.new(to_string(value))
-          end
-
+        |> Map.get("ingredients", %{})
+        |> Map.values()
+        |> Enum.map(fn ingredient ->
           %{
-            "ingredient_id" => ingredient_id,
-            "dosage_amount" => dosage,
-            "dosage_unit" => unit
+            "ingredient_id" => ingredient["ingredient_id"],
+            "dosage_amount" => case ingredient["dosage"] do
+              "" -> nil
+              nil -> nil
+              value -> Decimal.new(to_string(value))
+            end,
+            "dosage_unit" => String.to_atom(ingredient["unit"] || "mg")
           }
         end)
 

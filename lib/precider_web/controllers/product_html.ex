@@ -51,55 +51,16 @@ defmodule PreciderWeb.ProductHTML do
 
         <fieldset class="space-y-4">
           <legend class="text-lg font-medium text-base-content">Ingredients</legend>
-          <div class="space-y-4" id="ingredients-list">
-            <div class="flex justify-end">
-              <.button phx-click="open_ingredient_modal" type="button" variant="secondary">
-                <.icon name="hero-plus" /> Add Ingredient
-              </.button>
-            </div>
-            <%= for ingredient <- @ingredients do %>
-              <div class="flex items-center space-x-3 p-4 bg-base-100 rounded-lg border border-base-300 ingredient-row">
-                <input
-                  type="checkbox"
-                  name={"product[ingredient_ids][]"}
-                  value={ingredient.id}
-                  checked={ingredient.id in (@selected_ingredient_ids || [])}
-                  class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mr-2"
-                />
-                <label class="text-sm font-medium text-base-content w-[300px] truncate" title={ingredient.name}>
-                  <%= ingredient.name %>
-                </label>
-                <div class="flex items-center space-x-2 flex-1">
-                  <label class="block text-xs font-medium text-base-content">Dosage</label>
-                  <div class="flex flex-col">
-                    <input
-                      type="number"
-                      step="0.01"
-                      name={"product[ingredient_dosages][#{ingredient.id}]"}
-                      value={get_in(@ingredient_dosages, [ingredient.id]) || ""}
-                      class={"ml-1 w-24 rounded-md border-base-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base-content bg-base-100 placeholder:text-base-content/70 #{if Map.has_key?(@ingredient_errors, ingredient.id), do: "border-red-500", else: ""}"}
-                      placeholder="Amount"
-                    />
-                    <%= if errors = get_in(@ingredient_errors, [ingredient.id, :dosage_amount]) do %>
-                      <span class="text-xs text-red-500 mt-1"><%= elem(errors, 0) %></span>
-                    <% end %>
-                  </div>
-                  <div class="flex flex-col">
-                    <select
-                      name={"product[ingredient_units][#{ingredient.id}]"}
-                      class={"w-16 rounded-md border-base-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base-content bg-base-100 #{if Map.has_key?(@ingredient_errors, ingredient.id), do: "border-red-500", else: ""}"}
-                    >
-                      <option value="mg" selected={get_in(@ingredient_units, [ingredient.id]) in [nil, "", "mg"]}>mg</option>
-                      <option value="g" selected={get_in(@ingredient_units, [ingredient.id]) == "g"}>g</option>
-                      <option value="mcg" selected={get_in(@ingredient_units, [ingredient.id]) == "mcg"}>mcg</option>
-                    </select>
-                    <%= if errors = get_in(@ingredient_errors, [ingredient.id, :dosage_unit]) do %>
-                      <span class="text-xs text-red-500 mt-1"><%= elem(errors, 0) %></span>
-                    <% end %>
-                  </div>
-                </div>
-              </div>
-            <% end %>
+          <div class="space-y-4" id="ingredient-rows-container">
+            <!-- Dynamic ingredient rows will be rendered here by JS -->
+          </div>
+          <div id="ingredient-options-data" data-ingredients={Jason.encode!(@ingredients |> Enum.map(&%{id: &1.id, name: &1.name}))} style="display:none;"></div>
+          <div id="ingredient-errors-data" data-ingredient-errors={Jason.encode!(@ingredient_errors)} style="display:none;"></div>
+          <div class="flex justify-between items-center mt-4">
+            <.button phx-click="open_ingredient_modal" type="button" variant="secondary">
+              <.icon name="hero-plus" /> Add Ingredient
+            </.button>
+            <button type="button" id="add-ingredient-row" class="btn btn-outline btn-sm ml-4">+ Add another ingredient</button>
           </div>
         </fieldset>
       </div>
@@ -146,136 +107,6 @@ defmodule PreciderWeb.ProductHTML do
       </div>
     </div>
 
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const modal = document.getElementById('ingredient-modal');
-        const openButton = document.querySelector('[phx-click="open_ingredient_modal"]');
-        const closeButton = document.querySelector('[phx-click="close_ingredient_modal"]');
-        const ingredientForm = document.getElementById('ingredient-form');
-        const ingredientsList = document.getElementById('ingredients-list');
-
-        // Add checkbox change handlers
-        function setupCheckboxHandlers() {
-          const checkboxes = document.querySelectorAll('input[type="checkbox"][name="product[ingredient_ids][]"]');
-          checkboxes.forEach(checkbox => {
-            // Set initial state
-            const ingredientRow = checkbox.closest('.ingredient-row');
-            if (checkbox.checked) {
-              ingredientRow.classList.add('ingredient-selected');
-              ingredientRow.classList.remove('ingredient-highlight');
-            } else {
-              ingredientRow.classList.remove('ingredient-selected');
-            }
-            // Listen for changes
-            checkbox.addEventListener('change', function() {
-              if (this.checked) {
-                ingredientRow.classList.add('ingredient-selected');
-                ingredientRow.classList.remove('ingredient-highlight');
-              } else {
-                ingredientRow.classList.remove('ingredient-selected');
-              }
-            });
-          });
-        }
-
-        if (openButton && closeButton && modal) {
-          openButton.addEventListener('click', function() {
-            modal.classList.remove('hidden');
-          });
-
-          closeButton.addEventListener('click', function() {
-            modal.classList.add('hidden');
-          });
-        }
-
-        if (ingredientForm) {
-          ingredientForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(ingredientForm);
-            
-            try {
-              const response = await fetch(ingredientForm.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                  'Accept': 'application/json'
-                }
-              });
-
-              if (response.ok) {
-                const data = await response.json();
-                
-                // Close the modal
-                modal.classList.add('hidden');
-                
-                // Create new ingredient element
-                const ingredientElement = document.createElement('div');
-                ingredientElement.className = 'flex items-center space-x-3 p-4 bg-base-100 rounded-lg border border-green-500 ingredient-highlight ingredient-row';
-                ingredientElement.innerHTML = `
-                  <input
-                    type="checkbox"
-                    name="product[ingredient_ids][]"
-                    value="${data.ingredient.id}"
-                    class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mr-2"
-                  />
-                  <label class="text-sm font-medium text-base-content w-[300px] truncate" title="${data.ingredient.name}">
-                    ${data.ingredient.name}
-                  </label>
-                  <div class="flex items-center space-x-2 flex-1">
-                    <label class="block text-xs font-medium text-base-content">Dosage</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      name="product[ingredient_dosages][${data.ingredient.id}]"
-                      class="ml-1 w-24 rounded-md border-base-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base-content bg-base-100 placeholder:text-base-content/70"
-                      placeholder="Amount"
-                    />
-                    <select
-                      name="product[ingredient_units][${data.ingredient.id}]"
-                      class="w-16 rounded-md border-base-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base-content bg-base-100"
-                    >
-                      <option value="mg" selected>mg</option>
-                      <option value="g">g</option>
-                      <option value="mcg">mcg</option>
-                    </select>
-                  </div>
-                `;
-
-                // Insert alphabetically
-                const ingredientRows = Array.from(ingredientsList.children);
-                const newName = data.ingredient.name.toLowerCase();
-                let inserted = false;
-                for (let i = 0; i < ingredientRows.length; i++) {
-                  const label = ingredientRows[i].querySelector('label');
-                  if (label && label.textContent.trim().toLowerCase() > newName) {
-                    ingredientsList.insertBefore(ingredientElement, ingredientRows[i]);
-                    inserted = true;
-                    break;
-                  }
-                }
-                if (!inserted) {
-                  ingredientsList.appendChild(ingredientElement);
-                }
-
-                // Setup checkbox handler for the new ingredient
-                setupCheckboxHandlers();
-              } else {
-                // Handle error
-                const data = await response.json();
-                alert('Error creating ingredient: ' + (data.errors || 'Unknown error'));
-              }
-            } catch (error) {
-              console.error('Error:', error);
-              alert('Error creating ingredient. Please try again.');
-            }
-          });
-        }
-
-        // Initial setup of checkbox handlers
-        setupCheckboxHandlers();
-      });
-    </script>
     <style>
       div.ingredient-row.ingredient-selected {
         border-color: #eab308 !important; /* Tailwind yellow-500 */
