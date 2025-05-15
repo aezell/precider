@@ -23,6 +23,13 @@ defmodule PreciderWeb.ProductHTML do
   def product_form(assigns) do
     assigns = assign_new(assigns, :return_to, fn -> nil end)
     
+    # Convert Decimal values to strings for JSON encoding
+    ingredient_dosages = Map.new(assigns.ingredient_dosages, fn {k, v} -> 
+      {k, Decimal.to_string(v)}
+    end)
+    
+    assigns = assign(assigns, :ingredient_dosages, ingredient_dosages)
+    
     ~H"""
     <.form :let={f} for={@changeset} action={@action} class="space-y-8">
       <div class="space-y-4">
@@ -56,6 +63,11 @@ defmodule PreciderWeb.ProductHTML do
           </div>
           <div id="ingredient-options-data" data-ingredients={Jason.encode!(@ingredients |> Enum.map(&%{id: &1.id, name: &1.name}))} style="display:none;"></div>
           <div id="ingredient-errors-data" data-ingredient-errors={Jason.encode!(@ingredient_errors)} style="display:none;"></div>
+          <div id="selected-ingredients-data" 
+               data-selected-ingredients={Jason.encode!(@selected_ingredient_ids)}
+               data-ingredient-dosages={Jason.encode!(@ingredient_dosages)}
+               data-ingredient-units={Jason.encode!(@ingredient_units)}
+               style="display:none;"></div>
           <div class="flex justify-between items-center mt-4">
             <.button phx-click="open_ingredient_modal" type="button" variant="secondary">
               <.icon name="hero-plus" /> Add Ingredient

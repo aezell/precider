@@ -19,6 +19,12 @@ document.addEventListener('DOMContentLoaded', function() {
   const ingredientErrorsDiv = document.getElementById('ingredient-errors-data');
   const ingredientErrors = ingredientErrorsDiv ? JSON.parse(ingredientErrorsDiv.dataset.ingredientErrors || '{}') : {};
 
+  // Read selected ingredients data from hidden divs
+  const selectedIngredientsDiv = document.getElementById('selected-ingredients-data');
+  const selectedIngredients = selectedIngredientsDiv ? JSON.parse(selectedIngredientsDiv.dataset.selectedIngredients || '[]') : [];
+  const ingredientDosages = selectedIngredientsDiv ? JSON.parse(selectedIngredientsDiv.dataset.ingredientDosages || '{}') : {};
+  const ingredientUnits = selectedIngredientsDiv ? JSON.parse(selectedIngredientsDiv.dataset.ingredientUnits || '{}') : {};
+
   // State: array of ingredient row objects
   let ingredientRows = [];
 
@@ -26,6 +32,20 @@ document.addEventListener('DOMContentLoaded', function() {
   let nextRowId = 1;
   function generateRowId() {
     return nextRowId++;
+  }
+
+  // Initialize rows with existing data
+  if (selectedIngredients.length > 0) {
+    selectedIngredients.forEach(ingredientId => {
+      addRow({
+        ingredient_id: ingredientId,
+        dosage: ingredientDosages[ingredientId] || '',
+        unit: ingredientUnits[ingredientId] || 'mg'
+      });
+    });
+  } else {
+    // If no existing ingredients, add one empty row
+    addRow();
   }
 
   // Render all rows
