@@ -59,7 +59,7 @@ defmodule PreciderWeb.ProductLive.Index do
                           type="radio"
                           name={"ingredient_mode[#{ingredient.id}]"}
                           value="include"
-                          checked={@filters.ingredient_mode[ingredient.id] == "include"}
+                          checked={@filters.ingredient_mode[ingredient.id] == "include" or (@filters.dosage_min[ingredient.id] not in [nil, ""] or @filters.dosage_max[ingredient.id] not in [nil, ""])}
                           class="hidden peer/include"
                           id={"include-#{ingredient.id}"}
                         />
@@ -205,13 +205,31 @@ defmodule PreciderWeb.ProductLive.Index do
       dosage_max: parse_dosage_params(params["dosage_max"] || %{}),
       dosage_unit: parse_dosage_params(params["dosage_unit"] || %{})
     }
-
-    products = filter_products(Catalog.list_products(), filters)
-
+    normalized_filters = normalize_ingredient_modes(filters)
+    products = filter_products(Catalog.list_products(), normalized_filters)
     {:noreply,
      socket
-     |> assign(:filters, filters)
+     |> assign(:filters, normalized_filters)
      |> stream(:products, products, reset: true)}
+  end
+
+  @impl true
+  def handle_event("dosage_slider_change", %{"ingredient_id" => ingredient_id, "min" => min, "max" => max, "unit" => unit}, socket) do
+    ingredient_id = String.to_integer(ingredient_id)
+    filters = socket.assigns.filters
+    new_filters = %{
+      filters |
+      dosage_min: Map.put(filters.dosage_min, ingredient_id, min),
+      dosage_max: Map.put(filters.dosage_max, ingredient_id, max),
+      dosage_unit: Map.put(filters.dosage_unit, ingredient_id, unit)
+    }
+    normalized_filters = normalize_ingredient_modes(new_filters)
+    products = filter_products(Catalog.list_products(), normalized_filters)
+    {:noreply,
+      socket
+      |> assign(:filters, normalized_filters)
+      |> stream(:products, products, reset: true)
+    }
   end
 
   @impl true
@@ -239,8 +257,10 @@ defmodule PreciderWeb.ProductLive.Index do
   defp parse_ingredient_mode_params(params) do
     params
     |> Enum.reduce(%{}, fn {key, value}, acc ->
-      {id, _} = Integer.parse(key)
-      Map.put(acc, id, value)
+      case Integer.parse(key) do
+        {id, _} -> Map.put(acc, id, value)
+        :error -> acc
+      end
     end)
   end
 
@@ -316,5 +336,20 @@ defmodule PreciderWeb.ProductLive.Index do
       filters.dosage_min[ingredient_id] != nil ||
       filters.dosage_max[ingredient_id] != nil ||
       filters.dosage_unit[ingredient_id] != nil
+  end
+
+  defp normalize_ingredient_modes(filters) do
+    ingredient_mode = filters.ingredient_mode
+    dosage_min = filters.dosage_min
+    dosage_max = filters.dosage_max
+    Enum.reduce(Map.keys(dosage_min) ++ Map.keys(dosage_max), ingredient_mode, fn id, acc ->
+      id = if is_binary(id), do: String.to_integer(id), else: id
+      cond do
+        Map.get(acc, id) == "exclude" -> acc
+        (Map.get(dosage_min, id) not in [nil, ""]) or (Map.get(dosage_max, id) not in [nil, ""]) -> Map.put(acc, id, "include")
+        true -> acc
+      end
+    end)
+    |> then(fn new_ingredient_mode -> %{filters | ingredient_mode: new_ingredient_mode} end)
   end
 end
