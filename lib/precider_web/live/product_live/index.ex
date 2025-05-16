@@ -42,7 +42,11 @@ defmodule PreciderWeb.ProductLive.Index do
             </label>
             <div class="space-y-2">
               <div :for={ingredient <- @ingredients} class="collapse collapse-arrow bg-base-100">
-                <input type="checkbox" class="peer" />
+                <input 
+                  type="checkbox" 
+                  class="peer" 
+                  checked={has_active_filters?(@filters, ingredient.id)}
+                />
                 <div class="collapse-title text-sm font-medium">
                   {ingredient.name}
                 </div>
@@ -50,26 +54,54 @@ defmodule PreciderWeb.ProductLive.Index do
                   <form phx-change="filter" phx-debounce="300" class="form-control space-y-4">
                     <!-- Include/Exclude Toggle -->
                     <div class="flex items-center gap-4">
-                      <label class="label cursor-pointer gap-2">
-                        <span class="label-text">Include</span>
+                      <div class="relative">
                         <input
                           type="radio"
                           name={"ingredient_mode[#{ingredient.id}]"}
                           value="include"
                           checked={@filters.ingredient_mode[ingredient.id] == "include"}
-                          class="radio radio-sm"
+                          class="hidden peer/include"
+                          id={"include-#{ingredient.id}"}
                         />
-                      </label>
-                      <label class="label cursor-pointer gap-2">
-                        <span class="label-text">Exclude</span>
                         <input
                           type="radio"
                           name={"ingredient_mode[#{ingredient.id}]"}
                           value="exclude"
                           checked={@filters.ingredient_mode[ingredient.id] == "exclude"}
-                          class="radio radio-sm"
+                          class="hidden peer/exclude"
+                          id={"exclude-#{ingredient.id}"}
                         />
-                      </label>
+                        <input
+                          type="radio"
+                          name={"ingredient_mode[#{ingredient.id}]"}
+                          value=""
+                          checked={@filters.ingredient_mode[ingredient.id] == nil}
+                          class="hidden peer/none"
+                          id={"none-#{ingredient.id}"}
+                        />
+                        <label
+                          for={case @filters.ingredient_mode[ingredient.id] do
+                            "include" -> "exclude-#{ingredient.id}"
+                            "exclude" -> "none-#{ingredient.id}"
+                            _ -> "include-#{ingredient.id}"
+                          end}
+                          class={[
+                            "btn btn-sm cursor-pointer",
+                            "peer-checked/include:btn-success",
+                            "peer-checked/exclude:btn-error",
+                            "peer-checked/none:btn-ghost"
+                          ]}
+                        >
+                          <%= case @filters.ingredient_mode[ingredient.id] do %>
+                            <% "include" -> %>
+                              <.icon name="hero-check" class="h-4 w-4" /> Include
+                            <% "exclude" -> %>
+                              <.icon name="hero-x-mark" class="h-4 w-4" /> Exclude
+                            <% _ -> %>
+                              <.icon name="hero-minus" class="h-4 w-4" /> Filter
+                          <% end %>
+                        </label>
+                      </div>
                     </div>
 
                     <!-- Dosage Range -->
@@ -277,5 +309,12 @@ defmodule PreciderWeb.ProductLive.Index do
       :g -> Decimal.mult(amount, Decimal.new("1000"))
       :mcg -> Decimal.div(amount, Decimal.new("1000"))
     end
+  end
+
+  defp has_active_filters?(filters, ingredient_id) do
+    filters.ingredient_mode[ingredient_id] != nil ||
+      filters.dosage_min[ingredient_id] != nil ||
+      filters.dosage_max[ingredient_id] != nil ||
+      filters.dosage_unit[ingredient_id] != nil
   end
 end
