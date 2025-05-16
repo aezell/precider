@@ -94,11 +94,11 @@ defmodule PreciderWeb.ProductLive.Index do
                         >
                           <%= case @filters.ingredient_mode[ingredient.id] do %>
                             <% "include" -> %>
-                              <.icon name="hero-check" class="h-4 w-4" /> Include
+                              <.icon name="hero-check" class="h-4 w-4" /> Exclude?
                             <% "exclude" -> %>
-                              <.icon name="hero-x-mark" class="h-4 w-4" /> Exclude
+                              <.icon name="hero-x-mark" class="h-4 w-4" /> Reset?
                             <% _ -> %>
-                              <.icon name="hero-minus" class="h-4 w-4" /> Filter
+                              <.icon name="hero-minus" class="h-4 w-4" /> Include?
                           <% end %>
                         </label>
                       </div>
