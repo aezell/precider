@@ -28,6 +28,8 @@ defmodule PreciderWeb.Router do
     resources "/product_ingredients", ProductIngredientController
     get "/import", ImportController, :index
     get "/", PageController, :home
+
+    live "/product_finder", ProductLive.Index, :index
   end
 
   # Other scopes may use custom stacks.
