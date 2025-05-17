@@ -127,12 +127,12 @@ defmodule PreciderWeb.ProductLive.Index do
                         />
                         <select
                           name={"dosage_unit[#{ingredient.id}]"}
-                          value={@filters.dosage_unit[ingredient.id]}
+                          value={@filters.dosage_unit[ingredient.id] || "mg"}
                           class="select select-bordered w-20"
                         >
-                          <option value="mg">mg</option>
-                          <option value="g">g</option>
-                          <option value="mcg">mcg</option>
+                          <option value="mg" selected={@filters.dosage_unit[ingredient.id] == "mg"}>mg</option>
+                          <option value="g" selected={@filters.dosage_unit[ingredient.id] == "g"}>g</option>
+                          <option value="mcg" selected={@filters.dosage_unit[ingredient.id] == "mcg"}>mcg</option>
                         </select>
                       </div>
                     </div>
