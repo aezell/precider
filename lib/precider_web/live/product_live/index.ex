@@ -235,7 +235,7 @@ defmodule PreciderWeb.ProductLive.Index do
       dosage_unit: parse_dosage_params(params["dosage_unit"] || %{})
     }
     normalized_filters = normalize_ingredient_modes(filters)
-    products = filter_products(Catalog.list_products(), normalized_filters)
+    products = Catalog.filter_products(normalized_filters)
     
     {:noreply,
      socket
@@ -363,6 +363,7 @@ defmodule PreciderWeb.ProductLive.Index do
       :g -> Decimal.mult(amount, Decimal.new("1000"))
       :mcg -> Decimal.div(amount, Decimal.new("1000"))
     end
+
   end
 
   defp has_active_filters?(filters, ingredient_id) do
@@ -401,3 +402,5 @@ defmodule PreciderWeb.ProductLive.Index do
     |> :erlang.float_to_binary(decimals: 2)
   end
 end
+
+

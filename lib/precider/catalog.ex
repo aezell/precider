@@ -4,6 +4,7 @@ defmodule Precider.Catalog do
   """
 
   import Ecto.Query, warn: false
+  import Ecto.Query.API, only: [fragment: 1], warn: false
   alias Precider.Repo
 
   alias Precider.Catalog.{Brand, Product, Ingredient, ProductIngredient}
@@ -244,6 +245,104 @@ defmodule Precider.Catalog do
   def list_products do
     Repo.all(Product)
     |> Repo.preload([:brand, :product_ingredients, :ingredients])
+  end
+
+  @doc """
+  Returns a filtered list of products based on ingredient dosages.
+  The dosage comparisons are unit-aware, converting all values to milligrams for comparison.
+
+  ## Parameters
+
+    * `filters` - A map containing filter criteria:
+      * `:name` - Filter by product name
+      * `:ingredient_mode` - Map of ingredient_id to mode ("include" or "exclude")
+      * `:dosage_min` - Map of ingredient_id to minimum dosage
+      * `:dosage_max` - Map of ingredient_id to maximum dosage
+      * `:dosage_unit` - Map of ingredient_id to unit (:mg, :g, or :mcg)
+
+  ## Examples
+
+      iex> filter_products(%{name: "Protein", ingredient_mode: %{1 => "include"}, dosage_min: %{1 => "20"}, dosage_unit: %{1 => "g"}})
+      [%Product{}, ...]
+
+  """
+  def filter_products(filters) do
+    Product
+    |> filter_by_name(filters[:name])
+    |> filter_by_ingredients(filters)
+    |> Repo.all()
+    |> Repo.preload([:brand, :product_ingredients, :ingredients])
+  end
+
+  defp filter_by_name(query, nil), do: query
+  defp filter_by_name(query, ""), do: query
+  defp filter_by_name(query, name) do
+    from p in query,
+      where: ilike(p.name, ^"%#{name}%")
+  end
+
+  defp filter_by_ingredients(query, filters) do
+    Enum.reduce(filters[:ingredient_mode] || %{}, query, fn {ingredient_id, mode}, query ->
+      case mode do
+        "include" ->
+          min_dosage = filters[:dosage_min][ingredient_id]
+          max_dosage = filters[:dosage_max][ingredient_id]
+          unit = filters[:dosage_unit][ingredient_id]
+
+          from p in query,
+            join: pi in assoc(p, :product_ingredients),
+            where: pi.ingredient_id == ^ingredient_id,
+            where: ^build_dosage_where_clause(min_dosage, max_dosage, unit)
+
+        "exclude" ->
+          from p in query,
+            left_join: pi in assoc(p, :product_ingredients),
+            on: pi.ingredient_id == ^ingredient_id,
+            where: is_nil(pi.id)
+
+        _ -> query
+      end
+    end)
+  end
+
+  defp build_dosage_where_clause(min, max, unit) when not is_nil(unit) do
+    conditions = []
+
+    conditions = if min && min != "" do
+      min_mg = convert_to_mg(Decimal.new(min), String.to_atom(unit))
+      [dynamic([p, pi], 
+        (pi.dosage_unit == :mg and fragment("? >= ?", pi.dosage_amount, ^min_mg)) or
+        (pi.dosage_unit == :g and fragment("? * 1000.0 >= ?", pi.dosage_amount, ^min_mg)) or
+        (pi.dosage_unit == :mcg and fragment("? / 1000.0 >= ?", pi.dosage_amount, ^min_mg))
+      ) | conditions]
+    else
+      conditions
+    end
+
+    conditions = if max && max != "" do
+      max_mg = convert_to_mg(Decimal.new(max), String.to_atom(unit))
+      [dynamic([p, pi], 
+        (pi.dosage_unit == :mg and fragment("? <= ?", pi.dosage_amount, ^max_mg)) or
+        (pi.dosage_unit == :g and fragment("? * 1000.0 >= ?", pi.dosage_amount, ^max_mg)) or
+        (pi.dosage_unit == :mcg and fragment("? / 1000.0 <= ?", pi.dosage_amount, ^max_mg))
+      ) | conditions]
+    else
+      conditions
+    end
+
+    IO.inspect(conditions, label: "conditions")
+
+    Enum.reduce(conditions, true, &dynamic([p, pi], ^&1 and ^&2))
+  end
+  defp build_dosage_where_clause(_min, _max, _unit), do: true
+
+  defp convert_to_mg(amount, unit) do
+    case unit do
+      :mg -> amount
+      :g -> Decimal.mult(amount, Decimal.new("1000"))
+      :mcg -> Decimal.div(amount, Decimal.new("1000"))
+      _ -> amount
+    end
   end
 
   @doc """
