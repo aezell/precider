@@ -151,20 +151,47 @@ defmodule PreciderWeb.ProductLive.Index do
         </div>
 
         <!-- Products Table -->
-        <div class="flex-1">
-          <.table
-            id="products"
-            rows={@streams.products}
-            row_click={fn {_id, product} -> JS.navigate(~p"/products/#{product}") end}
-          >
-            <:col :let={{_id, product}} label="Name">{product.name}</:col>
-            <:action :let={{_id, product}}>
-              <div class="sr-only">
-                <.link navigate={~p"/products/#{product}"}>Show</.link>
-              </div>
-              <.link navigate={~p"/products/#{product}/edit"}>Edit</.link>
-            </:action>
-          </.table>
+        <div class="flex-1 overflow-x-auto">
+          <table class="table table-zebra w-full">
+            <thead>
+              <tr>
+                <th>Brand</th>
+                <th>Product Name</th>
+                <th>Price</th>
+                <%= for ingredient <- @displayed_ingredients do %>
+                  <th><%= ingredient.name %></th>
+                <% end %>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="products" phx-update="stream">
+              <tr :for={{id, product} <- @streams.products} id={id}>
+                <td><%= product.brand.name %></td>
+                <td><%= product.name %></td>
+                <td>$<%= format_decimal(product.price) %></td>
+                <%= for ingredient <- @displayed_ingredients do %>
+                  <td>
+                    <%= case Enum.find(product.product_ingredients, &(&1.ingredient_id == ingredient.id)) do %>
+                      <% nil -> %>
+                        -
+                      <% pi -> %>
+                        <%= format_decimal(pi.dosage_amount) %> <%= pi.dosage_unit %>
+                    <% end %>
+                  </td>
+                <% end %>
+                <td>
+                  <div class="flex gap-2">
+                    <.link navigate={~p"/products/#{product}"} class="btn btn-ghost btn-sm">
+                      <.icon name="hero-eye" class="h-4 w-4" />
+                    </.link>
+                    <.link navigate={~p"/products/#{product}/edit"} class="btn btn-ghost btn-sm">
+                      <.icon name="hero-pencil-square" class="h-4 w-4" />
+                    </.link>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </Layouts.app>
@@ -174,11 +201,13 @@ defmodule PreciderWeb.ProductLive.Index do
   @impl true
   def mount(_params, _session, socket) do
     ingredients = Catalog.list_ingredients()
+    products = Catalog.list_products()
 
     {:ok,
      socket
      |> assign(:page_title, "Listing Products")
      |> assign(:ingredients, ingredients)
+     |> assign(:displayed_ingredients, get_displayed_ingredients(products))
      |> assign(:filters, %{
        name: "",
        ingredient_mode: %{},
@@ -186,7 +215,7 @@ defmodule PreciderWeb.ProductLive.Index do
        dosage_max: %{},
        dosage_unit: %{}
      })
-     |> stream(:products, Catalog.list_products())}
+     |> stream(:products, products)}
   end
 
   @impl true
@@ -207,9 +236,11 @@ defmodule PreciderWeb.ProductLive.Index do
     }
     normalized_filters = normalize_ingredient_modes(filters)
     products = filter_products(Catalog.list_products(), normalized_filters)
+    
     {:noreply,
      socket
      |> assign(:filters, normalized_filters)
+     |> assign(:displayed_ingredients, get_displayed_ingredients(products))
      |> stream(:products, products, reset: true)}
   end
 
@@ -234,6 +265,8 @@ defmodule PreciderWeb.ProductLive.Index do
 
   @impl true
   def handle_event("clear_filters", _params, socket) do
+    products = Catalog.list_products()
+    
     {:noreply,
      socket
      |> assign(:filters, %{
@@ -243,7 +276,8 @@ defmodule PreciderWeb.ProductLive.Index do
        dosage_max: %{},
        dosage_unit: %{}
      })
-     |> stream(:products, Catalog.list_products(), reset: true)}
+     |> assign(:displayed_ingredients, get_displayed_ingredients(products))
+     |> stream(:products, products, reset: true)}
   end
 
   @impl true
@@ -351,5 +385,19 @@ defmodule PreciderWeb.ProductLive.Index do
       end
     end)
     |> then(fn new_ingredient_mode -> %{filters | ingredient_mode: new_ingredient_mode} end)
+  end
+
+  defp get_displayed_ingredients(products) do
+    products
+    |> Enum.flat_map(& &1.ingredients)
+    |> Enum.uniq_by(& &1.id)
+    |> Enum.sort_by(& &1.name)
+  end
+
+  defp format_decimal(decimal) when is_nil(decimal), do: "0.00"
+  defp format_decimal(decimal) do
+    decimal
+    |> Decimal.to_float()
+    |> :erlang.float_to_binary(decimals: 2)
   end
 end
