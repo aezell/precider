@@ -227,9 +227,15 @@ defmodule PreciderWeb.ProductLive.Index do
 
   @impl true
   def handle_event("filter", params, socket) do
+    current_filters = socket.assigns.filters
+    new_ingredient_mode = parse_ingredient_mode_params(params["ingredient_mode"] || %{})
+    
+    # Merge new ingredient mode with existing ones
+    ingredient_mode = Map.merge(current_filters.ingredient_mode, new_ingredient_mode)
+    
     filters = %{
       name: params["name"] || "",
-      ingredient_mode: parse_ingredient_mode_params(params["ingredient_mode"] || %{}),
+      ingredient_mode: ingredient_mode,
       dosage_min: parse_dosage_params(params["dosage_min"] || %{}),
       dosage_max: parse_dosage_params(params["dosage_max"] || %{}),
       dosage_unit: parse_dosage_params(params["dosage_unit"] || %{})
@@ -377,11 +383,14 @@ defmodule PreciderWeb.ProductLive.Index do
     ingredient_mode = filters.ingredient_mode
     dosage_min = filters.dosage_min
     dosage_max = filters.dosage_max
+    
+    # Only set include mode for ingredients that don't already have a mode
     Enum.reduce(Map.keys(dosage_min) ++ Map.keys(dosage_max), ingredient_mode, fn id, acc ->
       id = if is_binary(id), do: String.to_integer(id), else: id
       cond do
-        Map.get(acc, id) == "exclude" -> acc
-        (Map.get(dosage_min, id) not in [nil, ""]) or (Map.get(dosage_max, id) not in [nil, ""]) -> Map.put(acc, id, "include")
+        Map.has_key?(acc, id) -> acc  # Preserve existing mode
+        (Map.get(dosage_min, id) not in [nil, ""]) or (Map.get(dosage_max, id) not in [nil, ""]) -> 
+          Map.put(acc, id, "include")
         true -> acc
       end
     end)
