@@ -1,0 +1,189 @@
+<Layouts.app flash={@flash}>
+  <.header>
+    Listing Products
+    <:actions>
+      <.button variant="primary" navigate={~p"/products/new"}>
+        <.icon name="hero-plus" /> New Product
+      </.button>
+    </:actions>
+  </.header>
+
+  <div class="flex gap-4">
+    <!-- Filter Panel -->
+    <div class="w-64 bg-base-200 p-4 rounded-lg">
+      <!-- Name Search Form -->
+      <form phx-change="filter" class="mb-4">
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Search by Name</span>
+          </label>
+          <input
+            type="text"
+            name="name"
+            value={@filters.name}
+            placeholder="Search products..."
+            class="input input-bordered w-full"
+          />
+        </div>
+      </form>
+
+      <!-- Ingredient Filters -->
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">Ingredients</span>
+        </label>
+        <div class="space-y-2">
+          <div :for={ingredient <- @ingredients} class="collapse collapse-arrow bg-base-100">
+            <input 
+              type="checkbox" 
+              class="peer" 
+              checked={has_active_filters?(@filters, ingredient.id)}
+            />
+            <div class="collapse-title text-sm font-medium">
+              {ingredient.name}
+            </div>
+            <div class="collapse-content">
+              <form phx-change="filter" phx-debounce="300" class="form-control space-y-4">
+                <!-- Include/Exclude Toggle -->
+                <div class="flex items-center gap-4">
+                  <div class="relative">
+                    <input
+                      type="radio"
+                      name={"ingredient_mode[#{ingredient.id}]"}
+                      value="include"
+                      checked={@filters.ingredient_mode[ingredient.id] == "include" or (@filters.dosage_min[ingredient.id] not in [nil, ""] or @filters.dosage_max[ingredient.id] not in [nil, ""])}
+                      class="hidden peer/include"
+                      id={"include-#{ingredient.id}"}
+                    />
+                    <input
+                      type="radio"
+                      name={"ingredient_mode[#{ingredient.id}]"}
+                      value="exclude"
+                      checked={@filters.ingredient_mode[ingredient.id] == "exclude"}
+                      class="hidden peer/exclude"
+                      id={"exclude-#{ingredient.id}"}
+                    />
+                    <input
+                      type="radio"
+                      name={"ingredient_mode[#{ingredient.id}]"}
+                      value=""
+                      checked={@filters.ingredient_mode[ingredient.id] == nil}
+                      class="hidden peer/none"
+                      id={"none-#{ingredient.id}"}
+                    />
+                    <label
+                      for={case @filters.ingredient_mode[ingredient.id] do
+                        "include" -> "exclude-#{ingredient.id}"
+                        "exclude" -> "none-#{ingredient.id}"
+                        _ -> "include-#{ingredient.id}"
+                      end}
+                      class={[
+                        "btn btn-sm cursor-pointer",
+                        "peer-checked/include:btn-success",
+                        "peer-checked/exclude:btn-error",
+                        "peer-checked/none:btn-ghost"
+                      ]}
+                    >
+                      <%= case @filters.ingredient_mode[ingredient.id] do %>
+                        <% "include" -> %>
+                          <.icon name="hero-check" class="h-4 w-4" /> Exclude?
+                        <% "exclude" -> %>
+                          <.icon name="hero-x-mark" class="h-4 w-4" /> Reset?
+                        <% _ -> %>
+                          <.icon name="hero-minus" class="h-4 w-4" /> Include?
+                      <% end %>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Dosage Range -->
+                <div class="form-control">
+                  <label class="label">
+                    <span class="label-text text-sm">Dosage Range</span>
+                  </label>
+                  <div class="flex items-center gap-2">
+                    <input
+                      type="number"
+                      name={"dosage_min[#{ingredient.id}]"}
+                      value={@filters.dosage_min[ingredient.id]}
+                      placeholder="Min"
+                      class="input input-bordered w-20"
+                    />
+                    <span>-</span>
+                    <input
+                      type="number"
+                      name={"dosage_max[#{ingredient.id}]"}
+                      value={@filters.dosage_max[ingredient.id]}
+                      placeholder="Max"
+                      class="input input-bordered w-20"
+                    />
+                    <select
+                      name={"dosage_unit[#{ingredient.id}]"}
+                      value={@filters.dosage_unit[ingredient.id] || "mg"}
+                      class="select select-bordered w-20"
+                    >
+                      <option value="mg" selected={@filters.dosage_unit[ingredient.id] == "mg"}>mg</option>
+                      <option value="g" selected={@filters.dosage_unit[ingredient.id] == "g"}>g</option>
+                      <option value="mcg" selected={@filters.dosage_unit[ingredient.id] == "mcg"}>mcg</option>
+                    </select>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Clear Filters -->
+      <div class="pt-4">
+        <.button type="button" phx-click="clear_filters" variant="secondary" class="w-full">
+          Clear Filters
+        </.button>
+      </div>
+    </div>
+
+    <!-- Products Table -->
+    <div class="flex-1 overflow-x-auto">
+      <table class="table table-zebra w-full">
+        <thead>
+          <tr>
+            <th>Brand</th>
+            <th>Product Name</th>
+            <th>Price</th>
+            <%= for ingredient <- @displayed_ingredients do %>
+              <th><%= ingredient.name %></th>
+            <% end %>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="products" phx-update="stream">
+          <tr :for={{id, product} <- @streams.products} id={id}>
+            <td><%= product.brand.name %></td>
+            <td><%= product.name %></td>
+            <td>$<%= format_decimal(product.price) %></td>
+            <%= for ingredient <- @displayed_ingredients do %>
+              <td>
+                <%= case Enum.find(product.product_ingredients, &(&1.ingredient_id == ingredient.id)) do %>
+                  <% nil -> %>
+                    -
+                  <% pi -> %>
+                    <%= format_decimal(pi.dosage_amount) %> <%= pi.dosage_unit %>
+                <% end %>
+              </td>
+            <% end %>
+            <td>
+              <div class="flex gap-2">
+                <.link navigate={~p"/products/#{product}"} class="btn btn-ghost btn-sm">
+                  <.icon name="hero-eye" class="h-4 w-4" />
+                </.link>
+                <.link navigate={~p"/products/#{product}/edit"} class="btn btn-ghost btn-sm">
+                  <.icon name="hero-pencil-square" class="h-4 w-4" />
+                </.link>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</Layouts.app> 
