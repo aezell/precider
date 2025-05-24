@@ -58,6 +58,9 @@ defmodule PreciderWeb.ProductHTML do
 
         <fieldset class="space-y-4">
           <legend class="text-lg font-medium text-base-content">Ingredients</legend>
+          <.button phx-click="open_ingredient_modal" type="button" variant="secondary">
+              <.icon name="hero-plus" /> Add Ingredient
+            </.button>
           <div class="space-y-4" id="ingredient-rows-container">
             <!-- Dynamic ingredient rows will be rendered here by JS -->
           </div>
@@ -69,9 +72,6 @@ defmodule PreciderWeb.ProductHTML do
                data-ingredient-units={Jason.encode!(@ingredient_units)}
                style="display:none;"></div>
           <div class="flex justify-between items-center mt-4">
-            <.button phx-click="open_ingredient_modal" type="button" variant="secondary">
-              <.icon name="hero-plus" /> Add Ingredient
-            </.button>
             <button type="button" id="add-ingredient-row" class="btn btn-outline btn-sm ml-4">+ Add another ingredient</button>
           </div>
         </fieldset>
