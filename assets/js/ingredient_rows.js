@@ -131,6 +131,15 @@ document.addEventListener('DOMContentLoaded', function() {
       unit: initial.unit || 'mg',
     });
     renderRows();
+    // Focus the ingredient select dropdown in the last row
+    const container = document.getElementById('ingredient-rows-container');
+    const lastRow = container.lastElementChild;
+    if (lastRow) {
+      const select = lastRow.querySelector('.ingredient-select');
+      if (select) {
+        select.focus();
+      }
+    }
   }
 
   // Remove a row
