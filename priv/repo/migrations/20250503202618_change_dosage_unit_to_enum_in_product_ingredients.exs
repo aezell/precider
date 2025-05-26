@@ -2,21 +2,12 @@ defmodule Precider.Repo.Migrations.ChangeDosageUnitToEnumInProductIngredients do
   use Ecto.Migration
 
   def up do
-    execute("""
-    CREATE TYPE dosage_unit_enum AS ENUM ('mg', 'g', 'mcg');
-    """)
-
-    execute("""
-    ALTER TABLE product_ingredients
-    ALTER COLUMN dosage_unit TYPE dosage_unit_enum USING dosage_unit::text::dosage_unit_enum;
-    """)
+    # In SQLite, we use a string for enums and enforce allowed values in application logic
+    # No changes needed if dosage_unit is already a string
+    # If you want to enforce allowed values, use a CHECK constraint or handle in Ecto changeset
   end
 
   def down do
-    execute("""
-    ALTER TABLE product_ingredients
-    ALTER COLUMN dosage_unit TYPE varchar;
-    """)
-    execute("DROP TYPE dosage_unit_enum;")
+    # No-op for SQLite
   end
 end

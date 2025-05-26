@@ -15,7 +15,6 @@ defmodule Precider.Repo.Migrations.CreateProducts do
       add :release_date, :date
       add :is_active, :boolean, default: true, null: false
       add :slug, :string
-      add :search_vector, :tsvector
       add :brand_id, references(:brands, on_delete: :restrict), null: false
 
       timestamps()
