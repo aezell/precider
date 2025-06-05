@@ -9,7 +9,10 @@ config :bcrypt_elixir, :log_rounds, 1
 # to provide built-in test partitioning in CI environment.
 # Run `mix help test` for more information.
 config :precider, Precider.Repo,
-  database: Path.expand("../db/precider_test#{System.get_env("MIX_TEST_PARTITION")}.db", Path.dirname(__ENV__.file)),
+  username: "postgres",
+  password: "postgres",
+  hostname: "localhost",
+  database: "precider_test#{System.get_env("MIX_TEST_PARTITION")}",
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: System.schedulers_online() * 2
 
