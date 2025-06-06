@@ -11,7 +11,7 @@ defmodule Precider.Catalog.ProductIngredient do
     belongs_to :product, Product
     belongs_to :ingredient, Ingredient
 
-    timestamps()
+    timestamps(type: :utc_datetime)
   end
 
   def changeset(product_ingredient, attrs) do

@@ -14,7 +14,7 @@ defmodule Precider.Catalog.Ingredient do
     has_many :product_ingredients, ProductIngredient
     has_many :products, through: [:product_ingredients, :product]
 
-    timestamps()
+    timestamps(type: :utc_datetime)
   end
 
   def changeset(ingredient, attrs) do

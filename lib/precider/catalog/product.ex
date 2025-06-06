@@ -20,7 +20,7 @@ defmodule Precider.Catalog.Product do
     has_many :product_ingredients, ProductIngredient, on_replace: :delete
     has_many :ingredients, through: [:product_ingredients, :ingredient]
 
-    timestamps()
+    timestamps(type: :utc_datetime)
   end
 
   def changeset(product, attrs) do

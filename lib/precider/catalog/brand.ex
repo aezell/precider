@@ -14,7 +14,7 @@ defmodule Precider.Catalog.Brand do
 
     has_many :products, Product
 
-    timestamps()
+    timestamps(type: :utc_datetime)
   end
 
   def changeset(brand, attrs) do
