@@ -5,143 +5,156 @@
       <.button variant="primary" navigate={~p"/products/new"}>
         <.icon name="hero-plus" /> New Product
       </.button>
+      <!-- Filter Drawer Toggle Button -->
+      <button
+        type="button"
+        class="btn btn-secondary ml-2"
+        phx-click="open_drawer"
+        aria-label="Open Filters"
+      >
+        <.icon name="hero-funnel" class="h-5 w-5" /> Filters
+      </button>
     </:actions>
   </.header>
 
-  <div class="flex gap-4">
-    <!-- Filter Panel -->
-    <div class="w-64 bg-base-200 p-4 rounded-lg">
-      <!-- Name Search Form -->
-      <form phx-change="filter" class="mb-4">
-        <div class="form-control">
-          <label class="label">
-            <span class="label-text">Search by Name</span>
-          </label>
+  <!-- Filter Drawer and Backdrop -->
+  <div>
+    <aside
+      class={
+        [
+          "fixed top-0 left-0 h-full w-80 z-50 bg-base-200 shadow-lg transition-transform duration-300",
+          if(@drawer_open, do: "translate-x-0", else: "-translate-x-full")
+        ]
+      }
+      aria-modal="true"
+      aria-label="Filter Drawer"
+    >
+      <div class="flex items-center justify-between p-4 border-b border-base-300">
+        <span class="font-bold text-lg">Filters</span>
+        <button
+          type="button"
+          class="btn btn-ghost btn-sm"
+          phx-click="close_drawer"
+          aria-label="Close Filters"
+        >
+          <.icon name="hero-x-mark" class="h-5 w-5" />
+        </button>
+      </div>
+      <div class="p-4">
+        <!-- Searchable Ingredient Dropdown -->
+        <form phx-change="update_ingredient_search" autocomplete="off">
           <input
             type="text"
-            name="name"
-            value={@filters.name}
-            placeholder="Search products..."
+            name="ingredient_search_query"
+            value={@ingredient_search_query}
+            placeholder="Search ingredients..."
             class="input input-bordered w-full"
+            phx-debounce="200"
+            autocomplete="off"
           />
+        </form>
+        <div class="relative">
+          <ul
+            class={
+              [
+                "absolute left-0 right-0 mt-1 bg-base-100 border border-base-300 rounded shadow z-10",
+                if(@ingredient_search_results == [], do: "hidden", else: "")
+              ]
+            }
+          >
+            <li :for={ingredient <- @ingredient_search_results}>
+              <button
+                type="button"
+                phx-click="select_ingredient"
+                phx-value-id={ingredient.id}
+                class="block w-full text-left px-4 py-2 hover:bg-base-200"
+              >
+                <%= ingredient.name %>
+              </button>
+            </li>
+          </ul>
         </div>
-      </form>
 
-      <!-- Ingredient Filters -->
-      <div class="form-control">
-        <label class="label">
-          <span class="label-text">Ingredients</span>
-        </label>
-        <div class="space-y-2">
-          <div :for={ingredient <- @ingredients} class="collapse collapse-arrow bg-base-100">
-            <input 
-              type="checkbox" 
-              class="peer" 
-              checked={has_active_filters?(@filters, ingredient.id)}
-            />
-            <div class="collapse-title text-sm font-medium">
-              {ingredient.name}
+        <!-- Active Ingredient Filters -->
+        <div class="mt-6 space-y-4">
+          <div :for={filter <- @active_ingredient_filters} class="bg-base-100 rounded-lg p-4 shadow flex flex-col gap-2">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-medium">
+                <%= Enum.find(@ingredients, &(&1.id == filter.ingredient_id)).name %>
+              </span>
+              <button
+                type="button"
+                class="btn btn-ghost btn-xs"
+                phx-click="remove_ingredient_filter"
+                phx-value-ingredient_id={filter.ingredient_id}
+                aria-label="Remove filter"
+              >
+                <.icon name="hero-x-mark" class="h-4 w-4" />
+              </button>
             </div>
-            <div class="collapse-content">
-              <form phx-change="filter" phx-debounce="300" class="form-control space-y-4">
-                <!-- Include/Exclude Toggle -->
-                <div class="flex items-center gap-4">
-                  <div class="relative">
-                    <input
-                      type="radio"
-                      name={"ingredient_mode[#{ingredient.id}]"}
-                      value="include"
-                      checked={@filters.ingredient_mode[ingredient.id] == "include" or (@filters.dosage_min[ingredient.id] not in [nil, ""] or @filters.dosage_max[ingredient.id] not in [nil, ""])}
-                      class="hidden peer/include"
-                      id={"include-#{ingredient.id}"}
-                    />
-                    <input
-                      type="radio"
-                      name={"ingredient_mode[#{ingredient.id}]"}
-                      value="exclude"
-                      checked={@filters.ingredient_mode[ingredient.id] == "exclude"}
-                      class="hidden peer/exclude"
-                      id={"exclude-#{ingredient.id}"}
-                    />
-                    <input
-                      type="radio"
-                      name={"ingredient_mode[#{ingredient.id}]"}
-                      value=""
-                      checked={@filters.ingredient_mode[ingredient.id] == nil}
-                      class="hidden peer/none"
-                      id={"none-#{ingredient.id}"}
-                    />
-                    <label
-                      for={case @filters.ingredient_mode[ingredient.id] do
-                        "include" -> "exclude-#{ingredient.id}"
-                        "exclude" -> "none-#{ingredient.id}"
-                        _ -> "include-#{ingredient.id}"
-                      end}
-                      class={[
-                        "btn btn-sm cursor-pointer",
-                        "peer-checked/include:btn-success",
-                        "peer-checked/exclude:btn-error",
-                        "peer-checked/none:btn-ghost"
-                      ]}
-                    >
-                      <%= case @filters.ingredient_mode[ingredient.id] do %>
-                        <% "include" -> %>
-                          <.icon name="hero-check" class="h-4 w-4" /> Exclude?
-                        <% "exclude" -> %>
-                          <.icon name="hero-x-mark" class="h-4 w-4" /> Reset?
-                        <% _ -> %>
-                          <.icon name="hero-minus" class="h-4 w-4" /> Include?
-                      <% end %>
-                    </label>
-                  </div>
-                </div>
-
-                <!-- Dosage Range -->
-                <div class="form-control">
-                  <label class="label">
-                    <span class="label-text text-sm">Dosage Range</span>
-                  </label>
-                  <div class="flex items-center gap-2">
-                    <input
-                      type="number"
-                      name={"dosage_min[#{ingredient.id}]"}
-                      value={@filters.dosage_min[ingredient.id]}
-                      placeholder="Min"
-                      class="input input-bordered w-20"
-                    />
-                    <span>-</span>
-                    <input
-                      type="number"
-                      name={"dosage_max[#{ingredient.id}]"}
-                      value={@filters.dosage_max[ingredient.id]}
-                      placeholder="Max"
-                      class="input input-bordered w-20"
-                    />
-                    <select
-                      name={"dosage_unit[#{ingredient.id}]"}
-                      value={@filters.dosage_unit[ingredient.id] || "mg"}
-                      class="select select-bordered w-20"
-                    >
-                      <option value="mg" selected={@filters.dosage_unit[ingredient.id] == "mg"}>mg</option>
-                      <option value="g" selected={@filters.dosage_unit[ingredient.id] == "g"}>g</option>
-                      <option value="mcg" selected={@filters.dosage_unit[ingredient.id] == "mcg"}>mcg</option>
-                    </select>
-                  </div>
-                </div>
-              </form>
-            </div>
+            <form phx-change="update_ingredient_filter" class="flex flex-col gap-2">
+              <input type="hidden" name="ingredient_id" value={filter.ingredient_id} />
+              <div class="flex gap-2 items-center">
+                <button
+                  type="button"
+                  class={["btn btn-xs", filter.mode == "include" && "btn-success"]}
+                  phx-click="update_ingredient_filter"
+                  phx-value-ingredient_id={filter.ingredient_id}
+                  phx-value-mode="include"
+                >Include</button>
+                <button
+                  type="button"
+                  class={["btn btn-xs", filter.mode == "exclude" && "btn-error"]}
+                  phx-click="update_ingredient_filter"
+                  phx-value-ingredient_id={filter.ingredient_id}
+                  phx-value-mode="exclude"
+                >Exclude</button>
+              </div>
+              <div :if={filter.mode == "include"} class="flex gap-2 items-center">
+                <input
+                  type="number"
+                  name="min"
+                  value={filter.min}
+                  placeholder="Min"
+                  class="input input-bordered w-20"
+                />
+                <span>-</span>
+                <input
+                  type="number"
+                  name="max"
+                  value={filter.max}
+                  placeholder="Max"
+                  class="input input-bordered w-20"
+                />
+                <select
+                  name="unit"
+                  value={filter.unit || "mg"}
+                  class="select select-bordered w-20"
+                >
+                  <option value="mg" selected={filter.unit == "mg"}>mg</option>
+                  <option value="g" selected={filter.unit == "g"}>g</option>
+                  <option value="mcg" selected={filter.unit == "mcg"}>mcg</option>
+                </select>
+              </div>
+            </form>
           </div>
         </div>
-      </div>
 
-      <!-- Clear Filters -->
-      <div class="pt-4">
-        <.button type="button" phx-click="clear_filters" variant="secondary" class="w-full">
-          Clear Filters
-        </.button>
+        <!-- Clear All Filters Button -->
+        <div class="pt-4" :if={@active_ingredient_filters != []}>
+          <button
+            type="button"
+            class="btn btn-secondary w-full"
+            phx-click="clear_all_ingredient_filters"
+          >
+            Clear All Filters
+          </button>
+        </div>
       </div>
-    </div>
+    </aside>
+  </div>
 
+  <div class="flex gap-4">
     <!-- Products Table -->
     <div class="flex-1 overflow-x-auto">
       <table class="table table-zebra w-full">
