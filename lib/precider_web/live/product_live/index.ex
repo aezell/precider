@@ -63,7 +63,7 @@ defmodule PreciderWeb.ProductLive.Index do
   end
 
   @impl true
-  def handle_event("update_ingredient_filter", %{"ingredient_id" => id, "mode" => mode} = params, socket) do
+  def handle_event("update_ingredient_filter", %{"ingredient_id" => id, "mode" => mode}, socket) do
     ingredient_id = String.to_integer(id)
     active_filters = socket.assigns.active_ingredient_filters
     updated_filters = Enum.map(active_filters, fn filter ->
