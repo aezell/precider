@@ -188,9 +188,9 @@
       <table class="table table-zebra w-full">
         <thead>
           <tr>
-            <th>Brand</th>
-            <th>Product Name</th>
-            <th>Price</th>
+            <th class="sticky left-0 z-20 bg-base-200 w-32 min-w-32">Brand</th>
+            <th class="sticky left-32 z-20 bg-base-200 w-48 min-w-48">Product Name</th>
+            <th class="sticky left-[20rem] z-20 bg-base-200 w-24 min-w-24">Price</th>
             <%= for ingredient <- @displayed_ingredients do %>
               <th class={if Enum.any?(@active_ingredient_filters, &(&1.ingredient_id == ingredient.id)), do: "bg-primary/10 border-primary/30 border", else: ""}>
                 <%= ingredient.name %>
@@ -201,9 +201,9 @@
         </thead>
         <tbody id="products" phx-update="stream">
           <tr :for={{id, product} <- @streams.products} id={id}>
-            <td><%= product.brand.name %></td>
-            <td><%= product.name %></td>
-            <td>$<%= format_decimal(product.price) %></td>
+            <td class="sticky left-0 z-10 bg-base-100 w-32 min-w-32"><%= product.brand.name %></td>
+            <td class="sticky left-32 z-10 bg-base-100 w-48 min-w-48"><%= product.name %></td>
+            <td class="sticky left-[20rem] z-10 bg-base-100 w-24 min-w-24">$<%= format_decimal(product.price) %></td>
             <%= for ingredient <- @displayed_ingredients do %>
               <td class={if Enum.any?(@active_ingredient_filters, &(&1.ingredient_id == ingredient.id)), do: "bg-primary/10 border-primary/30 border", else: ""}>
                 <%= case Enum.find(product.product_ingredients, &(&1.ingredient_id == ingredient.id)) do %>
