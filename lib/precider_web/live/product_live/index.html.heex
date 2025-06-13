@@ -2,23 +2,49 @@
   <.header>
     Listing Products
     <:actions>
-      <.button variant="primary" navigate={~p"/products/new"}>
-        <.icon name="hero-plus" /> New Product
-      </.button>
-      <!-- Filter Drawer Toggle Button -->
+      <!-- Filter Drawer Toggle Button with Count Badge -->
       <button
         type="button"
-        class="btn btn-secondary ml-2"
+        class="btn btn-secondary ml-2 relative"
         phx-click="open_drawer"
         aria-label="Open Filters"
       >
         <.icon name="hero-funnel" class="h-5 w-5" /> Filters
+        <span :if={@active_ingredient_filters != []} class="badge badge-primary absolute -top-2 -right-2">
+          <%= length(@active_ingredient_filters) %>
+        </span>
       </button>
     </:actions>
   </.header>
 
+  <!-- Left Handle for Drawer (always rendered, slides with drawer) -->
+  <div
+    class={
+      [
+        "fixed z-50 flex flex-col items-center cursor-pointer bg-base-200 px-2 py-3 rounded-r-lg shadow transition-transform duration-300",
+        "top-[15vh]",
+        if(@drawer_open, do: "left-80", else: "left-0")
+      ]
+    }
+    phx-click="open_drawer"
+    style="min-width: 32px;"
+    aria-label="Open Filters"
+  >
+    <.icon name="hero-funnel" class="h-5 w-5" />
+    <span :if={@active_ingredient_filters != []} class="badge badge-primary mt-1">
+      <%= length(@active_ingredient_filters) %>
+    </span>
+  </div>
+
   <!-- Filter Drawer and Backdrop -->
   <div>
+    <!-- Overlay: only when drawer is open -->
+    <div
+      :if={@drawer_open}
+      class="fixed inset-0 z-40 bg-transparent"
+      phx-click="close_drawer"
+      aria-hidden={!@drawer_open}
+    />
     <aside
       class={
         [
@@ -28,6 +54,8 @@
       }
       aria-modal="true"
       aria-label="Filter Drawer"
+      phx-window-keydown="close_drawer"
+      phx-key="Escape"
     >
       <div class="flex items-center justify-between p-4 border-b border-base-300">
         <span class="font-bold text-lg">Filters</span>
