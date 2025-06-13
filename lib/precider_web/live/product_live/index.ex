@@ -164,7 +164,7 @@ defmodule PreciderWeb.ProductLive.Index do
     end
   end
 
-  defp get_displayed_ingredients(products, active_ingredient_filters \\ []) do
+  defp get_displayed_ingredients(products, active_ingredient_filters) do
     all_ingredients =
       products
       |> Enum.flat_map(& &1.ingredients)
