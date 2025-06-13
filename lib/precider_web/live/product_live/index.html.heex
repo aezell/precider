@@ -192,7 +192,9 @@
             <th>Product Name</th>
             <th>Price</th>
             <%= for ingredient <- @displayed_ingredients do %>
-              <th><%= ingredient.name %></th>
+              <th class={if Enum.any?(@active_ingredient_filters, &(&1.ingredient_id == ingredient.id)), do: "bg-primary/10 border-primary/30 border", else: ""}>
+                <%= ingredient.name %>
+              </th>
             <% end %>
             <th>Actions</th>
           </tr>
@@ -203,7 +205,7 @@
             <td><%= product.name %></td>
             <td>$<%= format_decimal(product.price) %></td>
             <%= for ingredient <- @displayed_ingredients do %>
-              <td>
+              <td class={if Enum.any?(@active_ingredient_filters, &(&1.ingredient_id == ingredient.id)), do: "bg-primary/10 border-primary/30 border", else: ""}>
                 <%= case Enum.find(product.product_ingredients, &(&1.ingredient_id == ingredient.id)) do %>
                   <% nil -> %>
                     -

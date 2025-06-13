@@ -12,7 +12,7 @@ defmodule PreciderWeb.ProductLive.Index do
      socket
      |> assign(:page_title, "Listing Products")
      |> assign(:ingredients, ingredients)
-     |> assign(:displayed_ingredients, get_displayed_ingredients(products))
+     |> assign(:displayed_ingredients, get_displayed_ingredients(products, []))
      |> assign(:drawer_open, false)
      |> assign(:ingredient_search_query, "")
      |> assign(:ingredient_search_results, [])
@@ -107,9 +107,10 @@ defmodule PreciderWeb.ProductLive.Index do
   @impl true
   def handle_info({:update_products}, socket) do
     products = filter_products(Catalog.list_products(), socket.assigns.active_ingredient_filters)
+    displayed_ingredients = get_displayed_ingredients(products, socket.assigns.active_ingredient_filters)
     {:noreply,
       socket
-      |> assign(:displayed_ingredients, get_displayed_ingredients(products))
+      |> assign(:displayed_ingredients, displayed_ingredients)
       |> stream(:products, products, reset: true)}
   end
 
@@ -163,11 +164,21 @@ defmodule PreciderWeb.ProductLive.Index do
     end
   end
 
-  defp get_displayed_ingredients(products) do
-    products
-    |> Enum.flat_map(& &1.ingredients)
-    |> Enum.uniq_by(& &1.id)
-    |> Enum.sort_by(& &1.name)
+  defp get_displayed_ingredients(products, active_ingredient_filters \\ []) do
+    all_ingredients =
+      products
+      |> Enum.flat_map(& &1.ingredients)
+      |> Enum.uniq_by(& &1.id)
+
+    if active_ingredient_filters == [] do
+      all_ingredients |> Enum.sort_by(& &1.name)
+    else
+      filtered_ids = Enum.map(active_ingredient_filters, fn f -> f.ingredient_id end)
+      filtered = Enum.filter(all_ingredients, &(&1.id in filtered_ids))
+      filtered = Enum.sort_by(filtered, fn ing -> Enum.find_index(filtered_ids, &(&1 == ing.id)) end)
+      rest = all_ingredients |> Enum.reject(&(&1.id in filtered_ids)) |> Enum.sort_by(& &1.name)
+      filtered ++ rest
+    end
   end
 
   defp format_decimal(decimal) when is_nil(decimal), do: "0.00"
