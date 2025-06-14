@@ -188,12 +188,37 @@
       <table class="table table-zebra w-full">
         <thead>
           <tr>
-            <th class="sticky left-0 z-20 bg-base-200 w-32 min-w-32">Brand</th>
-            <th class="sticky left-32 z-20 bg-base-200 w-48 min-w-48">Product Name</th>
-            <th class="sticky left-[20rem] z-20 bg-base-200 w-24 min-w-24">Price</th>
+            <th class="sticky left-0 z-20 bg-base-200 w-32 min-w-32 cursor-pointer select-none"
+                phx-click="sort_column" phx-value-column="brand">
+              Brand
+              <%= if @sort_by == "brand" do %>
+                <span><%= @sort_dir == :asc && "▲" || @sort_dir == :desc && "▼" %></span>
+              <% end %>
+            </th>
+            <th class="sticky left-32 z-20 bg-base-200 w-48 min-w-48 cursor-pointer select-none"
+                phx-click="sort_column" phx-value-column="name">
+              Product Name
+              <%= if @sort_by == "name" do %>
+                <span><%= @sort_dir == :asc && "▲" || @sort_dir == :desc && "▼" %></span>
+              <% end %>
+            </th>
+            <th class="sticky left-[20rem] z-20 bg-base-200 w-24 min-w-24 cursor-pointer select-none"
+                phx-click="sort_column" phx-value-column="price">
+              Price
+              <%= if @sort_by == "price" do %>
+                <span><%= @sort_dir == :asc && "▲" || @sort_dir == :desc && "▼" %></span>
+              <% end %>
+            </th>
             <%= for ingredient <- @displayed_ingredients do %>
-              <th class={if Enum.any?(@active_ingredient_filters, &(&1.ingredient_id == ingredient.id)), do: "bg-primary/10 border-primary/30 border", else: ""}>
+              <th class={[
+                    if(Enum.any?(@active_ingredient_filters, &(&1.ingredient_id == ingredient.id)), do: "bg-primary/10 border-primary/30 border", else: ""),
+                    "cursor-pointer select-none"
+                  ]}
+                  phx-click="sort_column" phx-value-column={"ingredient_#{ingredient.id}"}>
                 <%= ingredient.name %>
+                <%= if @sort_by == "ingredient_#{ingredient.id}" do %>
+                  <span><%= @sort_dir == :asc && "▲" || @sort_dir == :desc && "▼" %></span>
+                <% end %>
               </th>
             <% end %>
             <th>Actions</th>

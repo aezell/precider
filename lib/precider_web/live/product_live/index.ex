@@ -17,6 +17,8 @@ defmodule PreciderWeb.ProductLive.Index do
      |> assign(:ingredient_search_query, "")
      |> assign(:ingredient_search_results, [])
      |> assign(:active_ingredient_filters, [])
+     |> assign(:sort_by, nil)
+     |> assign(:sort_dir, nil)
      |> stream(:products, products)}
   end
 
@@ -105,6 +107,27 @@ defmodule PreciderWeb.ProductLive.Index do
   end
 
   @impl true
+  def handle_event("sort_column", %{"column" => column}, socket) do
+    current_sort_by = socket.assigns.sort_by
+    current_sort_dir = socket.assigns.sort_dir
+    new_sort =
+      cond do
+        current_sort_by != column -> {column, :desc}
+        current_sort_dir == :desc -> {column, :asc}
+        current_sort_dir == :asc -> {nil, nil}
+        true -> {column, :desc}
+      end
+    products = Catalog.list_products()
+    filtered_products = filter_products(products, socket.assigns.active_ingredient_filters)
+    sorted_products = sort_products(filtered_products, new_sort)
+    {:noreply,
+      socket
+      |> assign(:sort_by, elem(new_sort, 0))
+      |> assign(:sort_dir, elem(new_sort, 1))
+      |> stream(:products, sorted_products, reset: true)}
+  end
+
+  @impl true
   def handle_info({:update_products}, socket) do
     products = filter_products(Catalog.list_products(), socket.assigns.active_ingredient_filters)
     displayed_ingredients = get_displayed_ingredients(products, socket.assigns.active_ingredient_filters)
@@ -143,8 +166,8 @@ defmodule PreciderWeb.ProductLive.Index do
           is_nil(min) and is_nil(max) -> true
           not is_nil(unit) ->
             dosage = convert_to_mg(pi.dosage_amount, pi.dosage_unit)
-            min_dosage = if min && min != "", do: convert_to_mg(Decimal.new(min), String.to_atom(unit)), else: nil
-            max_dosage = if max && max != "", do: convert_to_mg(Decimal.new(max), String.to_atom(unit)), else: nil
+            min_dosage = if min && min != "", do: convert_to_mg(Decimal.new(min), unit), else: nil
+            max_dosage = if max && max != "", do: convert_to_mg(Decimal.new(max), unit), else: nil
             cond do
               min_dosage && max_dosage -> dosage >= min_dosage && dosage <= max_dosage
               min_dosage -> dosage >= min_dosage
@@ -161,6 +184,7 @@ defmodule PreciderWeb.ProductLive.Index do
       :mg -> amount
       :g -> Decimal.mult(amount, Decimal.new("1000"))
       :mcg -> Decimal.div(amount, Decimal.new("1000"))
+      _ -> amount
     end
   end
 
@@ -196,6 +220,57 @@ defmodule PreciderWeb.ProductLive.Index do
     send(self(), {:update_products})
     socket
   end
+
+  defp sort_products(products, {nil, _}), do: products
+
+  defp sort_products(products, {column, dir}) do
+    sorter =
+      case column do
+        "brand" -> fn p -> p.brand.name end
+        "name" -> fn p -> p.name end
+        "price" -> fn p -> p.price end
+        col ->
+          if String.starts_with?(col, "ingredient_") do
+            [_, id] = String.split(col, "_")
+            ingredient_id = String.to_integer(id)
+            fn p ->
+              case Enum.find(p.product_ingredients, &(&1.ingredient_id == ingredient_id)) do
+                nil -> nil
+                pi -> convert_to_mg(pi.dosage_amount, pi.dosage_unit)
+              end
+            end
+          else
+            fn _ -> nil end
+          end
+      end
+    # Custom sort for ingredient columns: nils always last, use Decimal.compare
+    if is_binary(column) and String.starts_with?(column, "ingredient_") do
+      Enum.sort(products, fn a, b ->
+        va = sorter.(a)
+        vb = sorter.(b)
+        cond do
+          is_nil(va) and is_nil(vb) -> false
+          is_nil(va) -> false
+          is_nil(vb) -> true
+          true ->
+            cmp = Decimal.compare(va, vb)
+            case dir do
+              :asc -> cmp == :lt or cmp == :eq
+              :desc -> cmp == :gt or cmp == :eq
+              _ -> cmp == :lt or cmp == :eq
+            end
+        end
+      end)
+    else
+      Enum.sort_by(products, sorter, sort_direction_fun(dir))
+    end
+  end
+
+  defp sort_direction_fun(:asc), do: &<=/2
+
+  defp sort_direction_fun(:desc), do: &>=/2
+
+  defp sort_direction_fun(_), do: &<=/2
 end
 
 
