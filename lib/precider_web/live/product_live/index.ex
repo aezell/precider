@@ -130,11 +130,12 @@ defmodule PreciderWeb.ProductLive.Index do
   @impl true
   def handle_info({:update_products}, socket) do
     products = filter_products(Catalog.list_products(), socket.assigns.active_ingredient_filters)
+    sorted_products = sort_products(products, {socket.assigns.sort_by, socket.assigns.sort_dir})
     displayed_ingredients = get_displayed_ingredients(products, socket.assigns.active_ingredient_filters)
     {:noreply,
       socket
       |> assign(:displayed_ingredients, displayed_ingredients)
-      |> stream(:products, products, reset: true)}
+      |> stream(:products, sorted_products, reset: true)}
   end
 
   defp filter_products(products, ingredient_filters) do
