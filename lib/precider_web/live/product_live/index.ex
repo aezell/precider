@@ -7,18 +7,22 @@ defmodule PreciderWeb.ProductLive.Index do
   def mount(_params, _session, socket) do
     ingredients = Catalog.list_ingredients()
     products = Catalog.list_products()
+    default_columns = get_default_ingredient_columns(products)
 
     {:ok,
      socket
      |> assign(:page_title, "Listing Products")
      |> assign(:ingredients, ingredients)
-     |> assign(:displayed_ingredients, get_displayed_ingredients(products, []))
+     |> assign(:displayed_ingredients, get_displayed_ingredients(products, [], default_columns))
      |> assign(:drawer_open, false)
      |> assign(:ingredient_search_query, "")
      |> assign(:ingredient_search_results, [])
      |> assign(:active_ingredient_filters, [])
      |> assign(:sort_by, nil)
      |> assign(:sort_dir, nil)
+     |> assign(:column_chooser_open, false)
+     |> assign(:default_ingredient_columns, default_columns)
+     |> assign(:selected_ingredient_columns, default_columns)
      |> stream(:products, products)}
   end
 
@@ -107,6 +111,62 @@ defmodule PreciderWeb.ProductLive.Index do
   end
 
   @impl true
+  def handle_event("open_column_chooser", _params, socket) do
+    {:noreply, assign(socket, :column_chooser_open, true)}
+  end
+
+  @impl true
+  def handle_event("close_column_chooser", _params, socket) do
+    {:noreply, assign(socket, :column_chooser_open, false)}
+  end
+
+  @impl true
+  def handle_event("update_column_selection", %{"ingredient_id" => _ingredient_id, "selected" => _selected}, socket) do
+    # This will be handled by JavaScript to update localStorage
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("update_column_selections", %{"selected_columns" => selected_columns}, socket) do
+    # Update selected columns from localStorage
+    selected_ids = Enum.map(selected_columns, &String.to_integer/1)
+    products = Catalog.list_products()
+    displayed_ingredients = get_displayed_ingredients(products, socket.assigns.active_ingredient_filters, selected_ids)
+    
+    {:noreply,
+     socket
+     |> assign(:selected_ingredient_columns, selected_ids)
+     |> assign(:displayed_ingredients, displayed_ingredients)
+     |> stream(:products, products, reset: true)}
+  end
+
+  @impl true
+  def handle_event("select_all_columns", _params, socket) do
+    all_ingredient_ids = Enum.map(socket.assigns.ingredients, & &1.id)
+    products = Catalog.list_products()
+    displayed_ingredients = get_displayed_ingredients(products, socket.assigns.active_ingredient_filters, all_ingredient_ids)
+    
+    {:noreply,
+     socket
+     |> assign(:selected_ingredient_columns, all_ingredient_ids)
+     |> assign(:displayed_ingredients, displayed_ingredients)
+     |> stream(:products, products, reset: true)}
+  end
+
+  @impl true
+  def handle_event("select_default_columns", _params, socket) do
+    default_ids = socket.assigns.default_ingredient_columns
+    products = Catalog.list_products()
+    displayed_ingredients = get_displayed_ingredients(products, socket.assigns.active_ingredient_filters, default_ids)
+    
+    {:noreply,
+     socket
+     |> assign(:selected_ingredient_columns, default_ids)
+     |> assign(:displayed_ingredients, displayed_ingredients)
+     |> stream(:products, products, reset: true)}
+  end
+
+  @impl true
   def handle_event("sort_column", %{"column" => column}, socket) do
     current_sort_by = socket.assigns.sort_by
     current_sort_dir = socket.assigns.sort_dir
@@ -131,7 +191,7 @@ defmodule PreciderWeb.ProductLive.Index do
   def handle_info({:update_products}, socket) do
     products = filter_products(Catalog.list_products(), socket.assigns.active_ingredient_filters)
     sorted_products = sort_products(products, {socket.assigns.sort_by, socket.assigns.sort_dir})
-    displayed_ingredients = get_displayed_ingredients(products, socket.assigns.active_ingredient_filters)
+    displayed_ingredients = get_displayed_ingredients(products, socket.assigns.active_ingredient_filters, socket.assigns.selected_ingredient_columns)
     {:noreply,
       socket
       |> assign(:displayed_ingredients, displayed_ingredients)
@@ -189,21 +249,58 @@ defmodule PreciderWeb.ProductLive.Index do
     end
   end
 
-  defp get_displayed_ingredients(products, active_ingredient_filters) do
+  defp get_displayed_ingredients(products, active_ingredient_filters, selected_columns) do
     all_ingredients =
       products
       |> Enum.flat_map(& &1.ingredients)
       |> Enum.uniq_by(& &1.id)
 
     if active_ingredient_filters == [] do
-      all_ingredients |> Enum.sort_by(& &1.name)
+      # Filter to only show selected columns
+      all_ingredients 
+      |> Enum.filter(&(&1.id in selected_columns))
+      |> Enum.sort_by(& &1.name)
     else
       filtered_ids = Enum.map(active_ingredient_filters, fn f -> f.ingredient_id end)
       filtered = Enum.filter(all_ingredients, &(&1.id in filtered_ids))
       filtered = Enum.sort_by(filtered, fn ing -> Enum.find_index(filtered_ids, &(&1 == ing.id)) end)
-      rest = all_ingredients |> Enum.reject(&(&1.id in filtered_ids)) |> Enum.sort_by(& &1.name)
+      
+      # For non-filtered ingredients, only show selected ones
+      rest = all_ingredients 
+      |> Enum.reject(&(&1.id in filtered_ids))
+      |> Enum.filter(&(&1.id in selected_columns))
+      |> Enum.sort_by(& &1.name)
+      
       filtered ++ rest
     end
+  end
+
+  defp calculate_ingredient_popularity(products) do
+    total_products = length(products)
+    
+    if total_products == 0 do
+      []
+    else
+      # Count how many products contain each ingredient
+      ingredient_counts = 
+        products
+        |> Enum.flat_map(& &1.ingredients)
+        |> Enum.reduce(%{}, fn ingredient, acc ->
+          Map.update(acc, ingredient.id, 1, &(&1 + 1))
+        end)
+      
+      # Calculate percentage and filter for >50%
+      threshold = total_products * 0.5
+      
+      ingredient_counts
+      |> Enum.filter(fn {_id, count} -> count > threshold end)
+      |> Enum.map(fn {id, _count} -> id end)
+      |> Enum.sort()
+    end
+  end
+
+  defp get_default_ingredient_columns(products) do
+    calculate_ingredient_popularity(products)
   end
 
   defp format_decimal(decimal) when is_nil(decimal), do: "0.00"

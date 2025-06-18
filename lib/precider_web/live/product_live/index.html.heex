@@ -2,6 +2,15 @@
   <.header>
     Listing Products
     <:actions>
+      <!-- Column Chooser Button -->
+      <button
+        type="button"
+        class="btn btn-outline ml-2"
+        phx-click="open_column_chooser"
+        aria-label="Choose Columns"
+      >
+        <.icon name="hero-table-cells" class="h-5 w-5" /> Columns
+      </button>
       <!-- Filter Drawer Toggle Button with Count Badge -->
       <button
         type="button"
@@ -214,7 +223,8 @@
                     if(Enum.any?(@active_ingredient_filters, &(&1.ingredient_id == ingredient.id)), do: "bg-primary/10 border-primary/30 border", else: ""),
                     "cursor-pointer select-none"
                   ]}
-                  phx-click="sort_column" phx-value-column={"ingredient_#{ingredient.id}"}>
+                  phx-click="sort_column" 
+                  phx-value-column={"ingredient_#{ingredient.id}"}>
                 <%= ingredient.name %>
                 <%= if @sort_by == "ingredient_#{ingredient.id}" do %>
                   <span><%= @sort_dir == :asc && "▲" || @sort_dir == :desc && "▼" %></span>
@@ -252,6 +262,76 @@
           </tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- Hidden data for JavaScript -->
+  <div id="default-columns-data" data-default-columns={Jason.encode!(@default_ingredient_columns)} style="display:none;"></div>
+
+  <!-- Column Chooser Modal -->
+  <div :if={@column_chooser_open} class="fixed inset-0 z-50 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+        <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+      </div>
+      <div class="inline-block align-bottom bg-base-100 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <div class="bg-base-100 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-medium text-base-content">Choose Ingredient Columns</h3>
+            <button
+              type="button"
+              class="btn btn-ghost btn-sm"
+              phx-click="close_column_chooser"
+              aria-label="Close Column Chooser"
+            >
+              <.icon name="hero-x-mark" class="h-5 w-5" />
+            </button>
+          </div>
+          
+          <form phx-change="update_column_selections" class="space-y-3 max-h-96 overflow-y-auto">
+            <div :for={ingredient <- @ingredients} class="flex items-center">
+              <input
+                type="checkbox"
+                id={"ingredient-#{ingredient.id}"}
+                name="selected_columns[]"
+                value={ingredient.id}
+                checked={ingredient.id in @selected_ingredient_columns}
+                class="checkbox checkbox-primary"
+              />
+              <label for={"ingredient-#{ingredient.id}"} class="ml-3 text-sm text-base-content">
+                <%= ingredient.name %>
+              </label>
+            </div>
+          </form>
+          
+          <div class="mt-4 flex justify-between">
+            <button
+              type="button"
+              class="btn btn-outline btn-sm"
+              phx-click="select_all_columns"
+            >
+              Select All
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline btn-sm"
+              phx-click="select_default_columns"
+            >
+              Select Popular (>50%)
+            </button>
+          </div>
+        </div>
+        
+        <div class="bg-base-200 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button
+            type="button"
+            class="btn btn-primary"
+            phx-click="close_column_chooser"
+          >
+            Done
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </Layouts.app> 
