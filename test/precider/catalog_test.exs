@@ -131,7 +131,8 @@ defmodule Precider.CatalogTest do
     end
 
     test "create_product/1 with valid data creates a product" do
-      valid_attrs = %{name: "some name"}
+      brand = brand_fixture()
+      valid_attrs = %{name: "some name", price: "29.99", brand_id: brand.id}
 
       assert {:ok, %Product{} = product} = Catalog.create_product(valid_attrs)
       assert product.name == "some name"
@@ -185,12 +186,20 @@ defmodule Precider.CatalogTest do
     end
 
     test "create_product_ingredient/1 with valid data creates a product_ingredient" do
-      valid_attrs = %{dosage_amount: "120.5"}
+      product = product_fixture()
+      ingredient = ingredient_fixture()
+
+      valid_attrs = %{
+        dosage_amount: "120.50",
+        dosage_unit: :mg,
+        product_id: product.id,
+        ingredient_id: ingredient.id
+      }
 
       assert {:ok, %ProductIngredient{} = product_ingredient} =
                Catalog.create_product_ingredient(valid_attrs)
 
-      assert product_ingredient.dosage_amount == Decimal.new("120.5")
+      assert product_ingredient.dosage_amount == Decimal.new("120.50")
     end
 
     test "create_product_ingredient/1 with invalid data returns error changeset" do

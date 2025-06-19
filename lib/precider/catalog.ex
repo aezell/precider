@@ -215,7 +215,10 @@ defmodule Precider.Catalog do
       # First delete all associated product_ingredients
       Repo.delete_all(from pi in ProductIngredient, where: pi.ingredient_id == ^ingredient.id)
       # Then delete the ingredient
-      Repo.delete(ingredient)
+      case Repo.delete(ingredient) do
+        {:ok, deleted_ingredient} -> deleted_ingredient
+        error -> Repo.rollback(error)
+      end
     end)
   end
 

@@ -23,6 +23,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Asset Management:**
 - `mix assets.build` - Build assets for development
 - `mix assets.deploy` - Build and minify assets for production
+- Always run `mix compile` after your changes.
+- Always run `mix format` after your changes.
 
 ## Architecture Overview
 

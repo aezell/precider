@@ -130,7 +130,7 @@ defmodule PreciderWeb.PreChooserLive.Index do
   end
 
   defp score_product(product, answers) do
-    base_score = 100
+    base_score = 50
     score = base_score
 
     # Experience level scoring
@@ -166,17 +166,17 @@ defmodule PreciderWeb.PreChooserLive.Index do
         do: adjust_score_for_timing(score, product, answers["timing"]),
         else: score
 
-    {product, max(0, score)}
+    {product, min(100, max(0, score))}
   end
 
   defp adjust_score_for_beginner(score, product) do
     # Beginners should avoid high-stim products
-    caffeine_amount = get_ingredient_amount(product, "Caffeine")
+    caffeine_amount = get_ingredient_amount_by_category(product, "energy")
 
     cond do
-      caffeine_amount > 300 -> score - 30
-      caffeine_amount > 200 -> score - 15
-      caffeine_amount < 150 -> score + 10
+      caffeine_amount > 300 -> score - 15
+      caffeine_amount > 200 -> score - 8
+      caffeine_amount < 150 -> score + 5
       true -> score
     end
   end
@@ -184,31 +184,30 @@ defmodule PreciderWeb.PreChooserLive.Index do
   defp adjust_score_for_advanced(score, product) do
     # Advanced users might prefer higher doses
     total_ingredients = length(product.product_ingredients)
-    if total_ingredients > 10, do: score + 15, else: score
+    if total_ingredients > 10, do: score + 8, else: score
   end
 
   defp adjust_score_for_goals(score, product, goals) when is_list(goals) do
     Enum.reduce(goals, score, fn goal, acc ->
       case goal do
         "energy" ->
-          caffeine = get_ingredient_amount(product, "Caffeine")
-          if caffeine > 150, do: acc + 20, else: acc
+          energy_amount = get_ingredient_amount_by_category(product, "energy")
+          if energy_amount > 150, do: acc + 8, else: acc
 
         "focus" ->
-          if has_ingredient(product, ["L-Tyrosine", "Alpha-GPC", "Choline"]),
-            do: acc + 15,
-            else: acc
+          if has_ingredient_by_category(product, "focus"), do: acc + 6, else: acc
 
         "endurance" ->
-          if has_ingredient(product, ["Beta-Alanine", "Citrulline"]), do: acc + 15, else: acc
+          if has_ingredient_by_category(product, "endurance"), do: acc + 6, else: acc
 
         "strength" ->
-          if has_ingredient(product, ["Creatine", "Betaine"]), do: acc + 15, else: acc
+          if has_ingredient_by_category(product, "strength"), do: acc + 6, else: acc
 
         "pump" ->
-          if has_ingredient(product, ["Citrulline", "Arginine", "Nitrates"]),
-            do: acc + 20,
-            else: acc
+          if has_ingredient_by_category(product, "pump"), do: acc + 8, else: acc
+
+        "fat_loss" ->
+          if has_ingredient_by_category(product, "fat_loss"), do: acc + 10, else: acc
 
         _ ->
           acc
@@ -219,31 +218,31 @@ defmodule PreciderWeb.PreChooserLive.Index do
   defp adjust_score_for_goals(score, _product, _goals), do: score
 
   defp adjust_score_for_caffeine(score, product, tolerance) do
-    caffeine_amount = get_ingredient_amount(product, "Caffeine")
+    caffeine_amount = get_ingredient_amount_by_category(product, "energy")
 
     case tolerance do
       "none" ->
-        if caffeine_amount == 0, do: score + 30, else: score - 50
+        if caffeine_amount == 0, do: score + 15, else: score - 25
 
       "low" ->
         cond do
-          caffeine_amount == 0 -> score + 10
-          caffeine_amount <= 150 -> score + 20
-          caffeine_amount <= 200 -> score + 5
-          true -> score - 20
+          caffeine_amount == 0 -> score + 5
+          caffeine_amount <= 150 -> score + 10
+          caffeine_amount <= 200 -> score + 3
+          true -> score - 10
         end
 
       "medium" ->
         cond do
-          caffeine_amount >= 150 && caffeine_amount <= 250 -> score + 15
-          caffeine_amount > 300 -> score - 10
+          caffeine_amount >= 150 && caffeine_amount <= 250 -> score + 8
+          caffeine_amount > 300 -> score - 5
           true -> score
         end
 
       "high" ->
         cond do
-          caffeine_amount >= 250 -> score + 20
-          caffeine_amount < 150 -> score - 10
+          caffeine_amount >= 250 -> score + 10
+          caffeine_amount < 150 -> score - 5
           true -> score
         end
 
@@ -256,15 +255,15 @@ defmodule PreciderWeb.PreChooserLive.Index do
     price = Decimal.to_float(product.price || Decimal.new(0))
 
     case budget do
-      "low" -> if price <= 35, do: score + 15, else: score - 20
-      "medium" -> if price > 35 && price <= 50, do: score + 10, else: score - 5
-      "high" -> if price > 50, do: score + 5, else: score
+      "low" -> if price <= 35, do: score + 8, else: score - 10
+      "medium" -> if price > 35 && price <= 50, do: score + 5, else: score - 3
+      "high" -> if price > 50, do: score + 3, else: score
       _ -> score
     end
   end
 
   defp adjust_score_for_timing(score, product, timing) do
-    caffeine_amount = get_ingredient_amount(product, "Caffeine")
+    caffeine_amount = get_ingredient_amount_by_category(product, "energy")
 
     case timing do
       "evening" ->
@@ -281,26 +280,22 @@ defmodule PreciderWeb.PreChooserLive.Index do
     end
   end
 
-  defp get_ingredient_amount(product, ingredient_name) do
+  defp get_ingredient_amount_by_category(product, category) do
     product.product_ingredients
-    |> Enum.find(fn pi -> pi.ingredient.name == ingredient_name end)
-    |> case do
-      nil ->
-        0
-
-      pi ->
-        # Convert to mg for comparison
-        case pi.dosage_unit do
-          :mg -> Decimal.to_float(pi.dosage_amount)
-          :g -> Decimal.to_float(pi.dosage_amount) * 1000
-          :mcg -> Decimal.to_float(pi.dosage_amount) / 1000
-        end
-    end
+    |> Enum.filter(fn pi -> pi.ingredient.category == category end)
+    |> Enum.map(fn pi ->
+      # Convert to mg for comparison
+      case pi.dosage_unit do
+        :mg -> Decimal.to_float(pi.dosage_amount)
+        :g -> Decimal.to_float(pi.dosage_amount) * 1000
+        :mcg -> Decimal.to_float(pi.dosage_amount) / 1000
+      end
+    end)
+    |> Enum.sum()
   end
 
-  defp has_ingredient(product, ingredient_names) when is_list(ingredient_names) do
-    product_ingredient_names = Enum.map(product.product_ingredients, & &1.ingredient.name)
-    Enum.any?(ingredient_names, fn name -> name in product_ingredient_names end)
+  defp has_ingredient_by_category(product, category) do
+    Enum.any?(product.product_ingredients, fn pi -> pi.ingredient.category == category end)
   end
 
   defp generate_reasons(product, answers) do
@@ -341,25 +336,35 @@ defmodule PreciderWeb.PreChooserLive.Index do
     Enum.reduce(goals, [], fn goal, acc ->
       case goal do
         "energy" ->
-          caffeine = get_ingredient_amount(product, "Caffeine")
+          energy_amount = get_ingredient_amount_by_category(product, "energy")
 
-          if caffeine > 150,
-            do: ["High caffeine content (#{round(caffeine)}mg) for sustained energy" | acc],
+          if energy_amount > 150,
+            do: ["High stimulant content (#{round(energy_amount)}mg) for sustained energy" | acc],
             else: acc
 
         "focus" ->
-          if has_ingredient(product, ["L-Tyrosine", "Alpha-GPC"]),
+          if has_ingredient_by_category(product, "focus"),
             do: ["Contains focus-enhancing nootropics" | acc],
             else: acc
 
         "endurance" ->
-          if has_ingredient(product, ["Beta-Alanine"]),
-            do: ["Beta-Alanine helps delay muscle fatigue" | acc],
+          if has_ingredient_by_category(product, "endurance"),
+            do: ["Contains endurance-supporting ingredients" | acc],
             else: acc
 
         "pump" ->
-          if has_ingredient(product, ["Citrulline"]),
-            do: ["Citrulline promotes better blood flow and muscle pumps" | acc],
+          if has_ingredient_by_category(product, "pump"),
+            do: ["Contains pump-enhancing ingredients for better blood flow" | acc],
+            else: acc
+
+        "strength" ->
+          if has_ingredient_by_category(product, "strength"),
+            do: ["Contains strength-supporting ingredients like creatine" | acc],
+            else: acc
+
+        "fat_loss" ->
+          if has_ingredient_by_category(product, "fat_loss"),
+            do: ["Contains thermogenic ingredients to support fat burning" | acc],
             else: acc
 
         _ ->
@@ -371,17 +376,17 @@ defmodule PreciderWeb.PreChooserLive.Index do
   defp generate_goal_reasons(_product, _goals), do: []
 
   defp generate_caffeine_reason(product, tolerance) do
-    caffeine_amount = get_ingredient_amount(product, "Caffeine")
+    caffeine_amount = get_ingredient_amount_by_category(product, "energy")
 
     case tolerance do
       "none" when caffeine_amount == 0 ->
-        "Caffeine-free formula perfect for stimulant-sensitive users"
+        "Stimulant-free formula perfect for stimulant-sensitive users"
 
       "low" when caffeine_amount <= 150 ->
-        "Moderate caffeine (#{round(caffeine_amount)}mg) ideal for low tolerance"
+        "Moderate stimulant content (#{round(caffeine_amount)}mg) ideal for low tolerance"
 
       "high" when caffeine_amount >= 250 ->
-        "High caffeine (#{round(caffeine_amount)}mg) for maximum energy"
+        "High stimulant content (#{round(caffeine_amount)}mg) for maximum energy"
 
       _ ->
         nil

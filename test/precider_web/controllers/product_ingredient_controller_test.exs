@@ -3,7 +3,7 @@ defmodule PreciderWeb.ProductIngredientControllerTest do
 
   import Precider.CatalogFixtures
 
-  @create_attrs %{dosage_amount: "120.5"}
+  @create_attrs %{dosage_amount: "120.5", dosage_unit: :mg}
   @update_attrs %{dosage_amount: "456.7"}
   @invalid_attrs %{dosage_amount: nil}
 
@@ -23,7 +23,15 @@ defmodule PreciderWeb.ProductIngredientControllerTest do
 
   describe "create product_ingredient" do
     test "redirects to show when data is valid", %{conn: conn} do
-      conn = post(conn, ~p"/product_ingredients", product_ingredient: @create_attrs)
+      product = product_fixture()
+      ingredient = ingredient_fixture()
+
+      create_attrs =
+        @create_attrs
+        |> Map.put(:product_id, product.id)
+        |> Map.put(:ingredient_id, ingredient.id)
+
+      conn = post(conn, ~p"/product_ingredients", product_ingredient: create_attrs)
 
       assert %{id: id} = redirected_params(conn)
       assert redirected_to(conn) == ~p"/product_ingredients/#{id}"

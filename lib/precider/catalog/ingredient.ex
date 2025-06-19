@@ -4,12 +4,13 @@ defmodule Precider.Catalog.Ingredient do
 
   alias Precider.Catalog.ProductIngredient
 
-  @derive {Jason.Encoder, only: [:id, :name, :description, :benefits, :slug]}
+  @derive {Jason.Encoder, only: [:id, :name, :description, :benefits, :slug, :category]}
   schema "ingredients" do
     field :name, :string
     field :description, :string
     field :benefits, :string
     field :slug, :string
+    field :category, :string
 
     has_many :product_ingredients, ProductIngredient
     has_many :products, through: [:product_ingredients, :product]
@@ -19,7 +20,7 @@ defmodule Precider.Catalog.Ingredient do
 
   def changeset(ingredient, attrs) do
     ingredient
-    |> cast(attrs, [:name, :description, :benefits, :slug])
+    |> cast(attrs, [:name, :description, :benefits, :slug, :category])
     |> validate_required([:name])
     |> unique_constraint(:name)
     |> unique_constraint(:slug)

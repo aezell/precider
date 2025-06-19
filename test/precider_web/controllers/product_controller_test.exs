@@ -3,7 +3,7 @@ defmodule PreciderWeb.ProductControllerTest do
 
   import Precider.CatalogFixtures
 
-  @create_attrs %{name: "some name"}
+  @create_attrs %{name: "some name", price: "29.99"}
   @update_attrs %{name: "some updated name"}
   @invalid_attrs %{name: nil}
 
@@ -23,7 +23,9 @@ defmodule PreciderWeb.ProductControllerTest do
 
   describe "create product" do
     test "redirects to show when data is valid", %{conn: conn} do
-      conn = post(conn, ~p"/products", product: @create_attrs)
+      brand = brand_fixture()
+      create_attrs = Map.put(@create_attrs, :brand_id, brand.id)
+      conn = post(conn, ~p"/products", product: create_attrs)
 
       assert %{id: id} = redirected_params(conn)
       assert redirected_to(conn) == ~p"/products/#{id}"
