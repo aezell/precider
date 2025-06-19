@@ -37,6 +37,12 @@ defmodule PreciderWeb.PreChooserLive.Index do
     },
     %{
       id: 6,
+      name: "cost_preference",
+      title: "Cost Preference",
+      description: "What matters more to you when comparing costs?"
+    },
+    %{
+      id: 7,
       name: "timing",
       title: "Workout Timing",
       description: "When do you usually work out?"
@@ -157,7 +163,13 @@ defmodule PreciderWeb.PreChooserLive.Index do
     # Budget scoring
     score =
       if answers["budget"],
-        do: adjust_score_for_budget(score, product, answers["budget"]),
+        do:
+          adjust_score_for_budget(
+            score,
+            product,
+            answers["budget"],
+            answers["cost_preference"] || "total_cost"
+          ),
         else: score
 
     # Timing scoring
@@ -251,14 +263,43 @@ defmodule PreciderWeb.PreChooserLive.Index do
     end
   end
 
-  defp adjust_score_for_budget(score, product, budget) do
+  defp adjust_score_for_budget(score, product, budget, cost_preference) do
     price = Decimal.to_float(product.price || Decimal.new(0))
 
+    # Calculate cost per serving if preference is set and servings data is available
+    cost_to_compare =
+      case cost_preference do
+        "cost_per_serving"
+        when not is_nil(product.servings_per_container) and product.servings_per_container > 0 ->
+          price / product.servings_per_container
+
+        _ ->
+          price
+      end
+
+    # Adjust thresholds based on cost preference
+    {low_threshold, medium_threshold} =
+      case cost_preference do
+        # Per serving thresholds
+        "cost_per_serving" -> {1.5, 2.5}
+        # Total cost thresholds
+        _ -> {35, 50}
+      end
+
     case budget do
-      "low" -> if price <= 35, do: score + 8, else: score - 10
-      "medium" -> if price > 35 && price <= 50, do: score + 5, else: score - 3
-      "high" -> if price > 50, do: score + 3, else: score
-      _ -> score
+      "low" ->
+        if cost_to_compare <= low_threshold, do: score + 8, else: score - 10
+
+      "medium" ->
+        if cost_to_compare > low_threshold && cost_to_compare <= medium_threshold,
+          do: score + 5,
+          else: score - 3
+
+      "high" ->
+        if cost_to_compare > medium_threshold, do: score + 3, else: score
+
+      _ ->
+        score
     end
   end
 
@@ -322,7 +363,13 @@ defmodule PreciderWeb.PreChooserLive.Index do
     # Add budget reason
     reasons =
       if answers["budget"] do
-        budget_reason = generate_budget_reason(product, answers["budget"])
+        budget_reason =
+          generate_budget_reason(
+            product,
+            answers["budget"],
+            answers["cost_preference"] || "total_cost"
+          )
+
         if budget_reason, do: [budget_reason | reasons], else: reasons
       else
         reasons
@@ -393,12 +440,24 @@ defmodule PreciderWeb.PreChooserLive.Index do
     end
   end
 
-  defp generate_budget_reason(product, budget) do
+  defp generate_budget_reason(product, budget, cost_preference) do
     price = Decimal.to_float(product.price || Decimal.new(0))
 
+    # Calculate cost per serving if preference is set and servings data is available
+    cost_to_show =
+      case cost_preference do
+        "cost_per_serving"
+        when not is_nil(product.servings_per_container) and product.servings_per_container > 0 ->
+          cost_per_serving = price / product.servings_per_container
+          "#{format_money(cost_per_serving)} per serving"
+
+        _ ->
+          format_money(price)
+      end
+
     case budget do
-      "low" when price <= 35 -> "Great value at $#{:erlang.float_to_binary(price, decimals: 2)}"
-      "high" when price > 50 -> "Premium formula with advanced ingredients"
+      "low" -> "Great value at #{cost_to_show}"
+      "high" -> "Premium formula with advanced ingredients (#{cost_to_show})"
       _ -> nil
     end
   end
@@ -408,9 +467,33 @@ defmodule PreciderWeb.PreChooserLive.Index do
       (step_id == assigns.current_step && assigns.show_results)
   end
 
+  defp format_money(amount) when is_nil(amount), do: "N/A"
+  
+  defp format_money(amount) when is_float(amount) do
+    # Use sprintf to ensure exactly 2 decimal places
+    "$#{:io_lib.format("~.2f", [amount]) |> IO.iodata_to_binary()}"
+  end
+  
+  defp format_money(decimal_amount) do
+    amount = Decimal.to_float(decimal_amount)
+    format_money(amount)
+  end
+
   defp format_price(price) when is_nil(price), do: "N/A"
 
   defp format_price(price) do
-    "$#{:erlang.float_to_binary(Decimal.to_float(price), decimals: 2)}"
+    format_money(price)
+  end
+
+  defp format_cost_per_serving(product) do
+    price = Decimal.to_float(product.price || Decimal.new(0))
+
+    if not is_nil(product.servings_per_container) and product.servings_per_container > 0 do
+      cost_per_serving = price / product.servings_per_container
+      formatted_cost = format_money(cost_per_serving)
+      "#{formatted_cost} per serving"
+    else
+      nil
+    end
   end
 end

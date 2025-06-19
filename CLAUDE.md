@@ -81,3 +81,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - NEVER RUN mix ecto.reset
 - NEVER do anything that will save data to the database
 - NEVER do anything that will truncate, erase, or drop data in the database
+
+**Erlang and Elixir Best Practices:**
+- Only drop to `erlang` functions when absolutely necessary. Ask for approval before doing so while explaining why it's necessary.

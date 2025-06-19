@@ -438,6 +438,65 @@
                 </div>
               </form>
             <% 6 -> %>
+              <!-- Cost Preference -->
+              <h2 class="card-title text-2xl mb-2">What matters more when comparing costs?</h2>
+              <p class="text-base-content/70 mb-6">
+                Help us understand whether you care more about upfront cost or cost per serving.
+              </p>
+
+              <form phx-submit="next_step" class="space-y-4">
+                <input type="hidden" name="step" value="6" />
+
+                <div class="grid gap-4 md:grid-cols-2">
+                  <label class="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="cost_preference"
+                      value="total_cost"
+                      class="sr-only peer"
+                      required
+                    />
+                    <div class="card bg-base-200 peer-checked:bg-primary peer-checked:text-primary-content transition-all duration-200 hover:bg-base-300 peer-checked:hover:bg-primary/90">
+                      <div class="card-body items-center text-center p-6">
+                        <.icon name="hero-currency-dollar" class="h-12 w-12 mb-3" />
+                        <h3 class="font-bold">Total Cost</h3>
+                        <p class="text-sm opacity-80">
+                          I care about the upfront price of the container
+                        </p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label class="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="cost_preference"
+                      value="cost_per_serving"
+                      class="sr-only peer"
+                      required
+                    />
+                    <div class="card bg-base-200 peer-checked:bg-primary peer-checked:text-primary-content transition-all duration-200 hover:bg-base-300 peer-checked:hover:bg-primary/90">
+                      <div class="card-body items-center text-center p-6">
+                        <.icon name="hero-calculator" class="h-12 w-12 mb-3" />
+                        <h3 class="font-bold">Cost Per Serving</h3>
+                        <p class="text-sm opacity-80">
+                          I want the best value per workout session
+                        </p>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+
+                <div class="card-actions justify-between mt-6">
+                  <button type="button" phx-click="prev_step" class="btn btn-outline">
+                    <.icon name="hero-arrow-left" class="h-4 w-4 mr-1" /> Back
+                  </button>
+                  <button type="submit" class="btn btn-primary">
+                    Next <.icon name="hero-arrow-right" class="h-4 w-4 ml-1" />
+                  </button>
+                </div>
+              </form>
+            <% 7 -> %>
               <!-- Workout Timing -->
               <h2 class="card-title text-2xl mb-2">When do you usually work out?</h2>
               <p class="text-base-content/70 mb-6">
@@ -445,7 +504,7 @@
               </p>
 
               <form phx-submit="next_step" class="space-y-4">
-                <input type="hidden" name="step" value="6" />
+                <input type="hidden" name="step" value="7" />
 
                 <div class="grid gap-4 md:grid-cols-3">
                   <label class="cursor-pointer">
@@ -581,6 +640,11 @@
                 <p class="text-xl font-bold text-primary mt-1">
                   {format_price(rec.product.price)}
                 </p>
+                <%= if format_cost_per_serving(rec.product) do %>
+                  <p class="text-sm text-base-content/70">
+                    {format_cost_per_serving(rec.product)}
+                  </p>
+                <% end %>
               </div>
               
 <!-- Match Score -->
