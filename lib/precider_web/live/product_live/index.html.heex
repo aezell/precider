@@ -2,6 +2,10 @@
   <.header>
     Listing Products
     <:actions>
+      <!-- Pre-Chooser Wizard Link -->
+      <.link navigate={~p"/pre-chooser"} class="btn btn-primary">
+        <.icon name="hero-sparkles" class="h-5 w-5 mr-1" /> Pre Chooser Wizard
+      </.link>
       <!-- Column Chooser Button -->
       <button
         type="button"
@@ -19,33 +23,34 @@
         aria-label="Open Filters"
       >
         <.icon name="hero-funnel" class="h-5 w-5" /> Filters
-        <span :if={@active_ingredient_filters != []} class="badge badge-primary absolute -top-2 -right-2">
-          <%= length(@active_ingredient_filters) %>
+        <span
+          :if={@active_ingredient_filters != []}
+          class="badge badge-primary absolute -top-2 -right-2"
+        >
+          {length(@active_ingredient_filters)}
         </span>
       </button>
     </:actions>
   </.header>
-
-  <!-- Left Handle for Drawer (always rendered, slides with drawer) -->
+  
+<!-- Left Handle for Drawer (always rendered, slides with drawer) -->
   <div
-    class={
-      [
-        "fixed z-50 flex flex-col items-center cursor-pointer bg-base-200 px-2 py-3 rounded-r-lg shadow transition-transform duration-300",
-        "top-[15vh]",
-        if(@drawer_open, do: "left-80", else: "left-0")
-      ]
-    }
+    class={[
+      "fixed z-50 flex flex-col items-center cursor-pointer bg-base-200 px-2 py-3 rounded-r-lg shadow transition-transform duration-300",
+      "top-[15vh]",
+      if(@drawer_open, do: "left-80", else: "left-0")
+    ]}
     phx-click="open_drawer"
     style="min-width: 32px;"
     aria-label="Open Filters"
   >
     <.icon name="hero-funnel" class="h-5 w-5" />
     <span :if={@active_ingredient_filters != []} class="badge badge-primary mt-1">
-      <%= length(@active_ingredient_filters) %>
+      {length(@active_ingredient_filters)}
     </span>
   </div>
-
-  <!-- Filter Drawer and Backdrop -->
+  
+<!-- Filter Drawer and Backdrop -->
   <div>
     <!-- Overlay: only when drawer is open -->
     <div
@@ -55,12 +60,10 @@
       aria-hidden={!@drawer_open}
     />
     <aside
-      class={
-        [
-          "fixed top-0 left-0 h-full w-80 z-50 bg-base-200 shadow-lg transition-transform duration-300",
-          if(@drawer_open, do: "translate-x-0", else: "-translate-x-full")
-        ]
-      }
+      class={[
+        "fixed top-0 left-0 h-full w-80 z-50 bg-base-200 shadow-lg transition-transform duration-300",
+        if(@drawer_open, do: "translate-x-0", else: "-translate-x-full")
+      ]}
       aria-modal="true"
       aria-label="Filter Drawer"
       phx-window-keydown="close_drawer"
@@ -91,14 +94,10 @@
           />
         </form>
         <div class="relative">
-          <ul
-            class={
-              [
-                "absolute left-0 right-0 mt-1 bg-base-100 border border-base-300 rounded shadow z-10",
-                if(@ingredient_search_results == [], do: "hidden", else: "")
-              ]
-            }
-          >
+          <ul class={[
+            "absolute left-0 right-0 mt-1 bg-base-100 border border-base-300 rounded shadow z-10",
+            if(@ingredient_search_results == [], do: "hidden", else: "")
+          ]}>
             <li :for={ingredient <- @ingredient_search_results}>
               <button
                 type="button"
@@ -106,18 +105,21 @@
                 phx-value-id={ingredient.id}
                 class="block w-full text-left px-4 py-2 hover:bg-base-200"
               >
-                <%= ingredient.name %>
+                {ingredient.name}
               </button>
             </li>
           </ul>
         </div>
-
-        <!-- Active Ingredient Filters -->
+        
+<!-- Active Ingredient Filters -->
         <div class="mt-6 space-y-4">
-          <div :for={filter <- @active_ingredient_filters} class="bg-base-100 rounded-lg p-4 shadow flex flex-col gap-2">
+          <div
+            :for={filter <- @active_ingredient_filters}
+            class="bg-base-100 rounded-lg p-4 shadow flex flex-col gap-2"
+          >
             <div class="flex items-center justify-between gap-2">
               <span class="font-medium">
-                <%= Enum.find(@ingredients, &(&1.id == filter.ingredient_id)).name %>
+                {Enum.find(@ingredients, &(&1.id == filter.ingredient_id)).name}
               </span>
               <button
                 type="button"
@@ -138,14 +140,18 @@
                   phx-click="update_ingredient_filter"
                   phx-value-ingredient_id={filter.ingredient_id}
                   phx-value-mode="include"
-                >Include</button>
+                >
+                  Include
+                </button>
                 <button
                   type="button"
                   class={["btn btn-xs", filter.mode == "exclude" && "btn-error"]}
                   phx-click="update_ingredient_filter"
                   phx-value-ingredient_id={filter.ingredient_id}
                   phx-value-mode="exclude"
-                >Exclude</button>
+                >
+                  Exclude
+                </button>
               </div>
               <div :if={filter.mode == "include"} class="flex gap-2 items-center">
                 <input
@@ -176,9 +182,9 @@
             </form>
           </div>
         </div>
-
-        <!-- Clear All Filters Button -->
-        <div class="pt-4" :if={@active_ingredient_filters != []}>
+        
+<!-- Clear All Filters Button -->
+        <div :if={@active_ingredient_filters != []} class="pt-4">
           <button
             type="button"
             class="btn btn-secondary w-full"
@@ -197,37 +203,51 @@
       <table class="table table-zebra w-full">
         <thead>
           <tr>
-            <th class="sticky left-0 z-20 bg-base-200 w-32 min-w-32 cursor-pointer select-none"
-                phx-click="sort_column" phx-value-column="brand">
+            <th
+              class="sticky left-0 z-20 bg-base-200 w-32 min-w-32 cursor-pointer select-none"
+              phx-click="sort_column"
+              phx-value-column="brand"
+            >
               Brand
               <%= if @sort_by == "brand" do %>
-                <span><%= @sort_dir == :asc && "▲" || @sort_dir == :desc && "▼" %></span>
+                <span>{(@sort_dir == :asc && "▲") || (@sort_dir == :desc && "▼")}</span>
               <% end %>
             </th>
-            <th class="sticky left-32 z-20 bg-base-200 w-48 min-w-48 cursor-pointer select-none"
-                phx-click="sort_column" phx-value-column="name">
+            <th
+              class="sticky left-32 z-20 bg-base-200 w-48 min-w-48 cursor-pointer select-none"
+              phx-click="sort_column"
+              phx-value-column="name"
+            >
               Product Name
               <%= if @sort_by == "name" do %>
-                <span><%= @sort_dir == :asc && "▲" || @sort_dir == :desc && "▼" %></span>
+                <span>{(@sort_dir == :asc && "▲") || (@sort_dir == :desc && "▼")}</span>
               <% end %>
             </th>
-            <th class="sticky left-[20rem] z-20 bg-base-200 w-24 min-w-24 cursor-pointer select-none"
-                phx-click="sort_column" phx-value-column="price">
+            <th
+              class="sticky left-[20rem] z-20 bg-base-200 w-24 min-w-24 cursor-pointer select-none"
+              phx-click="sort_column"
+              phx-value-column="price"
+            >
               Price
               <%= if @sort_by == "price" do %>
-                <span><%= @sort_dir == :asc && "▲" || @sort_dir == :desc && "▼" %></span>
+                <span>{(@sort_dir == :asc && "▲") || (@sort_dir == :desc && "▼")}</span>
               <% end %>
             </th>
             <%= for ingredient <- @displayed_ingredients do %>
-              <th class={[
-                    if(Enum.any?(@active_ingredient_filters, &(&1.ingredient_id == ingredient.id)), do: "bg-primary/10 border-primary/30 border", else: ""),
-                    "cursor-pointer select-none"
-                  ]}
-                  phx-click="sort_column" 
-                  phx-value-column={"ingredient_#{ingredient.id}"}>
-                <%= ingredient.name %>
+              <th
+                class={[
+                  if(Enum.any?(@active_ingredient_filters, &(&1.ingredient_id == ingredient.id)),
+                    do: "bg-primary/10 border-primary/30 border",
+                    else: ""
+                  ),
+                  "cursor-pointer select-none"
+                ]}
+                phx-click="sort_column"
+                phx-value-column={"ingredient_#{ingredient.id}"}
+              >
+                {ingredient.name}
                 <%= if @sort_by == "ingredient_#{ingredient.id}" do %>
-                  <span><%= @sort_dir == :asc && "▲" || @sort_dir == :desc && "▼" %></span>
+                  <span>{(@sort_dir == :asc && "▲") || (@sort_dir == :desc && "▼")}</span>
                 <% end %>
               </th>
             <% end %>
@@ -236,16 +256,22 @@
         </thead>
         <tbody id="products" phx-update="stream">
           <tr :for={{id, product} <- @streams.products} id={id}>
-            <td class="sticky left-0 z-10 bg-base-100 w-32 min-w-32"><%= product.brand.name %></td>
-            <td class="sticky left-32 z-10 bg-base-100 w-48 min-w-48"><%= product.name %></td>
-            <td class="sticky left-[20rem] z-10 bg-base-100 w-24 min-w-24">$<%= format_decimal(product.price) %></td>
+            <td class="sticky left-0 z-10 bg-base-100 w-32 min-w-32">{product.brand.name}</td>
+            <td class="sticky left-32 z-10 bg-base-100 w-48 min-w-48">{product.name}</td>
+            <td class="sticky left-[20rem] z-10 bg-base-100 w-24 min-w-24">
+              ${format_decimal(product.price)}
+            </td>
             <%= for ingredient <- @displayed_ingredients do %>
-              <td class={if Enum.any?(@active_ingredient_filters, &(&1.ingredient_id == ingredient.id)), do: "bg-primary/10 border-primary/30 border", else: ""}>
+              <td class={
+                if Enum.any?(@active_ingredient_filters, &(&1.ingredient_id == ingredient.id)),
+                  do: "bg-primary/10 border-primary/30 border",
+                  else: ""
+              }>
                 <%= case Enum.find(product.product_ingredients, &(&1.ingredient_id == ingredient.id)) do %>
                   <% nil -> %>
                     -
                   <% pi -> %>
-                    <%= format_decimal(pi.dosage_amount) %> <%= pi.dosage_unit %>
+                    {format_decimal(pi.dosage_amount)} {pi.dosage_unit}
                 <% end %>
               </td>
             <% end %>
@@ -264,11 +290,16 @@
       </table>
     </div>
   </div>
-
-  <!-- Hidden data for JavaScript -->
-  <div id="default-columns-data" data-default-columns={Jason.encode!(@default_ingredient_columns)} style="display:none;"></div>
-
-  <!-- Column Chooser Modal -->
+  
+<!-- Hidden data for JavaScript -->
+  <div
+    id="default-columns-data"
+    data-default-columns={Jason.encode!(@default_ingredient_columns)}
+    style="display:none;"
+  >
+  </div>
+  
+<!-- Column Chooser Modal -->
   <div :if={@column_chooser_open} class="fixed inset-0 z-50 overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
       <div class="fixed inset-0 transition-opacity" aria-hidden="true">
@@ -287,7 +318,7 @@
               <.icon name="hero-x-mark" class="h-5 w-5" />
             </button>
           </div>
-          
+
           <form phx-change="update_column_selections" class="space-y-3 max-h-96 overflow-y-auto">
             <div :for={ingredient <- @ingredients} class="flex items-center">
               <input
@@ -299,17 +330,13 @@
                 class="checkbox checkbox-primary"
               />
               <label for={"ingredient-#{ingredient.id}"} class="ml-3 text-sm text-base-content">
-                <%= ingredient.name %>
+                {ingredient.name}
               </label>
             </div>
           </form>
-          
+
           <div class="mt-4 flex justify-between">
-            <button
-              type="button"
-              class="btn btn-outline btn-sm"
-              phx-click="select_all_columns"
-            >
+            <button type="button" class="btn btn-outline btn-sm" phx-click="select_all_columns">
               Select All
             </button>
             <button
@@ -321,17 +348,13 @@
             </button>
           </div>
         </div>
-        
+
         <div class="bg-base-200 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button
-            type="button"
-            class="btn btn-primary"
-            phx-click="close_column_chooser"
-          >
+          <button type="button" class="btn btn-primary" phx-click="close_column_chooser">
             Done
           </button>
         </div>
       </div>
     </div>
   </div>
-</Layouts.app> 
+</Layouts.app>

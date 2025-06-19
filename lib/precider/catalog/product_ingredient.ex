@@ -7,7 +7,7 @@ defmodule Precider.Catalog.ProductIngredient do
   schema "product_ingredients" do
     field :dosage_amount, :decimal
     field :dosage_unit, Ecto.Enum, values: [:mg, :g, :mcg]
-    
+
     belongs_to :product, Product
     belongs_to :ingredient, Ingredient
 
@@ -20,8 +20,9 @@ defmodule Precider.Catalog.ProductIngredient do
     |> validate_required([:dosage_amount, :dosage_unit, :ingredient_id])
     |> foreign_key_constraint(:product_id)
     |> foreign_key_constraint(:ingredient_id)
-    |> unique_constraint([:product_id, :ingredient_id], 
-        name: :product_ingredient_unique_index, 
-        message: "Ingredient already added to this product")
+    |> unique_constraint([:product_id, :ingredient_id],
+      name: :product_ingredient_unique_index,
+      message: "Ingredient already added to this product"
+    )
   end
 end

@@ -1,0 +1,668 @@
+<Layouts.app flash={@flash}>
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold text-primary mb-2">Pre-Workout Chooser</h1>
+      <p class="text-lg text-base-content/70">
+        Find your perfect pre-workout in just a few questions
+      </p>
+    </div>
+
+    <div :if={not @show_results}>
+      <!-- Progress Indicator -->
+      <div class="mb-8">
+        <div class="flex justify-center mb-4">
+          <div class="flex items-center space-x-2">
+            <%= for step <- @steps do %>
+              <div class="flex items-center">
+                <div class={[
+                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200",
+                  if(step_completed?(assigns, step.id),
+                    do: "bg-primary text-primary-content",
+                    else:
+                      if(step.id == @current_step,
+                        do: "bg-primary/20 text-primary border-2 border-primary",
+                        else: "bg-base-300 text-base-content/50"
+                      )
+                  )
+                ]}>
+                  <%= if step_completed?(assigns, step.id) do %>
+                    <.icon name="hero-check" class="h-4 w-4" />
+                  <% else %>
+                    {step.id}
+                  <% end %>
+                </div>
+                <%= if step.id < @total_steps do %>
+                  <div class={[
+                    "w-12 h-0.5 mx-2 transition-all duration-200",
+                    if(step_completed?(assigns, step.id), do: "bg-primary", else: "bg-base-300")
+                  ]}>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+        <div class="text-center">
+          <span class="text-sm text-base-content/70">
+            Step {@current_step} of {@total_steps}
+          </span>
+        </div>
+      </div>
+      
+<!-- Question Card -->
+      <div class="card bg-base-100 shadow-xl mb-8">
+        <div class="card-body">
+          <%= case @current_step do %>
+            <% 1 -> %>
+              <!-- Experience Level -->
+              <h2 class="card-title text-2xl mb-2">
+                How experienced are you with pre-workout supplements?
+              </h2>
+              <p class="text-base-content/70 mb-6">
+                This helps us recommend appropriate ingredient dosages for you.
+              </p>
+
+              <form phx-submit="next_step" class="space-y-4">
+                <input type="hidden" name="step" value="1" />
+
+                <div class="grid gap-4 md:grid-cols-3">
+                  <label class="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="experience"
+                      value="beginner"
+                      class="sr-only peer"
+                      required
+                    />
+                    <div class="card bg-base-200 peer-checked:bg-primary peer-checked:text-primary-content transition-all duration-200 hover:bg-base-300 peer-checked:hover:bg-primary/90">
+                      <div class="card-body items-center text-center p-6">
+                        <.icon name="hero-academic-cap" class="h-12 w-12 mb-3" />
+                        <h3 class="font-bold">Beginner</h3>
+                        <p class="text-sm opacity-80">
+                          New to pre-workouts or prefer mild effects
+                        </p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label class="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="experience"
+                      value="intermediate"
+                      class="sr-only peer"
+                      required
+                    />
+                    <div class="card bg-base-200 peer-checked:bg-primary peer-checked:text-primary-content transition-all duration-200 hover:bg-base-300 peer-checked:hover:bg-primary/90">
+                      <div class="card-body items-center text-center p-6">
+                        <.icon name="hero-user" class="h-12 w-12 mb-3" />
+                        <h3 class="font-bold">Intermediate</h3>
+                        <p class="text-sm opacity-80">Some experience with supplements</p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label class="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="experience"
+                      value="advanced"
+                      class="sr-only peer"
+                      required
+                    />
+                    <div class="card bg-base-200 peer-checked:bg-primary peer-checked:text-primary-content transition-all duration-200 hover:bg-base-300 peer-checked:hover:bg-primary/90">
+                      <div class="card-body items-center text-center p-6">
+                        <.icon name="hero-fire" class="h-12 w-12 mb-3" />
+                        <h3 class="font-bold">Advanced</h3>
+                        <p class="text-sm opacity-80">
+                          Very experienced, can handle strong formulas
+                        </p>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+
+                <div class="card-actions justify-end mt-6">
+                  <button type="submit" class="btn btn-primary">
+                    Next <.icon name="hero-arrow-right" class="h-4 w-4 ml-1" />
+                  </button>
+                </div>
+              </form>
+            <% 2 -> %>
+              <!-- Fitness Goals -->
+              <h2 class="card-title text-2xl mb-2">What are your primary fitness goals?</h2>
+              <p class="text-base-content/70 mb-6">
+                Select all that apply - we'll find ingredients that support these goals.
+              </p>
+
+              <form phx-submit="next_step" class="space-y-4">
+                <input type="hidden" name="step" value="2" />
+
+                <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <label class="cursor-pointer">
+                    <input type="checkbox" name="goals[]" value="energy" class="sr-only peer" />
+                    <div class="card bg-base-200 peer-checked:bg-primary peer-checked:text-primary-content transition-all duration-200 hover:bg-base-300 peer-checked:hover:bg-primary/90">
+                      <div class="card-body items-center text-center p-4">
+                        <.icon name="hero-bolt" class="h-10 w-10 mb-2" />
+                        <h3 class="font-bold">Energy</h3>
+                        <p class="text-xs opacity-80">Feel energized and alert</p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label class="cursor-pointer">
+                    <input type="checkbox" name="goals[]" value="focus" class="sr-only peer" />
+                    <div class="card bg-base-200 peer-checked:bg-primary peer-checked:text-primary-content transition-all duration-200 hover:bg-base-300 peer-checked:hover:bg-primary/90">
+                      <div class="card-body items-center text-center p-4">
+                        <.icon name="hero-eye" class="h-10 w-10 mb-2" />
+                        <h3 class="font-bold">Focus</h3>
+                        <p class="text-xs opacity-80">Mental clarity and concentration</p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label class="cursor-pointer">
+                    <input type="checkbox" name="goals[]" value="endurance" class="sr-only peer" />
+                    <div class="card bg-base-200 peer-checked:bg-primary peer-checked:text-primary-content transition-all duration-200 hover:bg-base-300 peer-checked:hover:bg-primary/90">
+                      <div class="card-body items-center text-center p-4">
+                        <.icon name="hero-clock" class="h-10 w-10 mb-2" />
+                        <h3 class="font-bold">Endurance</h3>
+                        <p class="text-xs opacity-80">Last longer during workouts</p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label class="cursor-pointer">
+                    <input type="checkbox" name="goals[]" value="strength" class="sr-only peer" />
+                    <div class="card bg-base-200 peer-checked:bg-primary peer-checked:text-primary-content transition-all duration-200 hover:bg-base-300 peer-checked:hover:bg-primary/90">
+                      <div class="card-body items-center text-center p-4">
+                        <.icon name="hero-trophy" class="h-10 w-10 mb-2" />
+                        <h3 class="font-bold">Strength</h3>
+                        <p class="text-xs opacity-80">Increase power and performance</p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label class="cursor-pointer">
+                    <input type="checkbox" name="goals[]" value="pump" class="sr-only peer" />
+                    <div class="card bg-base-200 peer-checked:bg-primary peer-checked:text-primary-content transition-all duration-200 hover:bg-base-300 peer-checked:hover:bg-primary/90">
+                      <div class="card-body items-center text-center p-4">
+                        <.icon name="hero-heart" class="h-10 w-10 mb-2" />
+                        <h3 class="font-bold">Pump</h3>
+                        <p class="text-xs opacity-80">Better blood flow and vascularity</p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label class="cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="goals[]"
+                      value="weight_loss"
+                      class="sr-only peer"
+                    />
+                    <div class="card bg-base-200 peer-checked:bg-primary peer-checked:text-primary-content transition-all duration-200 hover:bg-base-300 peer-checked:hover:bg-primary/90">
+                      <div class="card-body items-center text-center p-4">
+                        <.icon name="hero-scale" class="h-10 w-10 mb-2" />
+                        <h3 class="font-bold">Fat Loss</h3>
+                        <p class="text-xs opacity-80">Support weight management</p>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+
+                <div class="card-actions justify-between mt-6">
+                  <button type="button" phx-click="prev_step" class="btn btn-outline">
+                    <.icon name="hero-arrow-left" class="h-4 w-4 mr-1" /> Back
+                  </button>
+                  <button type="submit" class="btn btn-primary">
+                    Next <.icon name="hero-arrow-right" class="h-4 w-4 ml-1" />
+                  </button>
+                </div>
+              </form>
+            <% 3 -> %>
+              <!-- Caffeine Tolerance -->
+              <h2 class="card-title text-2xl mb-2">What's your caffeine tolerance?</h2>
+              <p class="text-base-content/70 mb-6">
+                This helps us recommend the right stimulant level for you.
+              </p>
+
+              <form phx-submit="next_step" class="space-y-4">
+                <input type="hidden" name="step" value="3" />
+
+                <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  <label class="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="caffeine"
+                      value="none"
+                      class="sr-only peer"
+                      required
+                    />
+                    <div class="card bg-base-200 peer-checked:bg-primary peer-checked:text-primary-content transition-all duration-200 hover:bg-base-300 peer-checked:hover:bg-primary/90">
+                      <div class="card-body items-center text-center p-4">
+                        <.icon name="hero-moon" class="h-10 w-10 mb-2" />
+                        <h3 class="font-bold">None</h3>
+                        <p class="text-xs opacity-80">0mg - Stimulant sensitive</p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label class="cursor-pointer">
+                    <input type="radio" name="caffeine" value="low" class="sr-only peer" required />
+                    <div class="card bg-base-200 peer-checked:bg-primary peer-checked:text-primary-content transition-all duration-200 hover:bg-base-300 peer-checked:hover:bg-primary/90">
+                      <div class="card-body items-center text-center p-4">
+                        <.icon name="hero-sun" class="h-10 w-10 mb-2" />
+                        <h3 class="font-bold">Low</h3>
+                        <p class="text-xs opacity-80">100-150mg - Like a cup of coffee</p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label class="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="caffeine"
+                      value="medium"
+                      class="sr-only peer"
+                      required
+                    />
+                    <div class="card bg-base-200 peer-checked:bg-primary peer-checked:text-primary-content transition-all duration-200 hover:bg-base-300 peer-checked:hover:bg-primary/90">
+                      <div class="card-body items-center text-center p-4">
+                        <.icon name="hero-fire" class="h-10 w-10 mb-2" />
+                        <h3 class="font-bold">Medium</h3>
+                        <p class="text-xs opacity-80">200-250mg - Regular coffee drinker</p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label class="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="caffeine"
+                      value="high"
+                      class="sr-only peer"
+                      required
+                    />
+                    <div class="card bg-base-200 peer-checked:bg-primary peer-checked:text-primary-content transition-all duration-200 hover:bg-base-300 peer-checked:hover:bg-primary/90">
+                      <div class="card-body items-center text-center p-4">
+                        <.icon name="hero-lightning-bolt" class="h-10 w-10 mb-2" />
+                        <h3 class="font-bold">High</h3>
+                        <p class="text-xs opacity-80">300mg+ - High tolerance</p>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+
+                <div class="card-actions justify-between mt-6">
+                  <button type="button" phx-click="prev_step" class="btn btn-outline">
+                    <.icon name="hero-arrow-left" class="h-4 w-4 mr-1" /> Back
+                  </button>
+                  <button type="submit" class="btn btn-primary">
+                    Next <.icon name="hero-arrow-right" class="h-4 w-4 ml-1" />
+                  </button>
+                </div>
+              </form>
+            <% 4 -> %>
+              <!-- Stimulant Preference -->
+              <h2 class="card-title text-2xl mb-2">
+                Do you have a preference for stimulant types?
+              </h2>
+              <p class="text-base-content/70 mb-6">
+                Different stimulants provide different effects and feelings.
+              </p>
+
+              <form phx-submit="next_step" class="space-y-4">
+                <input type="hidden" name="step" value="4" />
+
+                <div class="grid gap-4 md:grid-cols-3">
+                  <label class="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="stimulants"
+                      value="natural"
+                      class="sr-only peer"
+                      required
+                    />
+                    <div class="card bg-base-200 peer-checked:bg-primary peer-checked:text-primary-content transition-all duration-200 hover:bg-base-300 peer-checked:hover:bg-primary/90">
+                      <div class="card-body items-center text-center p-6">
+                        <.icon name="hero-leaf" class="h-12 w-12 mb-3" />
+                        <h3 class="font-bold">Natural Only</h3>
+                        <p class="text-sm opacity-80">
+                          Prefer plant-based stimulants like caffeine, green tea
+                        </p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label class="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="stimulants"
+                      value="synthetic"
+                      class="sr-only peer"
+                      required
+                    />
+                    <div class="card bg-base-200 peer-checked:bg-primary peer-checked:text-primary-content transition-all duration-200 hover:bg-base-300 peer-checked:hover:bg-primary/90">
+                      <div class="card-body items-center text-center p-6">
+                        <.icon name="hero-beaker" class="h-12 w-12 mb-3" />
+                        <h3 class="font-bold">Synthetic OK</h3>
+                        <p class="text-sm opacity-80">
+                          Open to synthetic stimulants for stronger effects
+                        </p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label class="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="stimulants"
+                      value="no_preference"
+                      class="sr-only peer"
+                      required
+                    />
+                    <div class="card bg-base-200 peer-checked:bg-primary peer-checked:text-primary-content transition-all duration-200 hover:bg-base-300 peer-checked:hover:bg-primary/90">
+                      <div class="card-body items-center text-center p-6">
+                        <.icon name="hero-question-mark-circle" class="h-12 w-12 mb-3" />
+                        <h3 class="font-bold">No Preference</h3>
+                        <p class="text-sm opacity-80">I'm flexible with ingredient types</p>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+
+                <div class="card-actions justify-between mt-6">
+                  <button type="button" phx-click="prev_step" class="btn btn-outline">
+                    <.icon name="hero-arrow-left" class="h-4 w-4 mr-1" /> Back
+                  </button>
+                  <button type="submit" class="btn btn-primary">
+                    Next <.icon name="hero-arrow-right" class="h-4 w-4 ml-1" />
+                  </button>
+                </div>
+              </form>
+            <% 5 -> %>
+              <!-- Budget -->
+              <h2 class="card-title text-2xl mb-2">What's your budget range?</h2>
+              <p class="text-base-content/70 mb-6">
+                Pre-workout prices typically range from $20-80+ per container.
+              </p>
+
+              <form phx-submit="next_step" class="space-y-4">
+                <input type="hidden" name="step" value="5" />
+
+                <div class="grid gap-4 md:grid-cols-3">
+                  <label class="cursor-pointer">
+                    <input type="radio" name="budget" value="low" class="sr-only peer" required />
+                    <div class="card bg-base-200 peer-checked:bg-success peer-checked:text-success-content transition-all duration-200 hover:bg-base-300 peer-checked:hover:bg-success/90">
+                      <div class="card-body items-center text-center p-6">
+                        <.icon name="hero-currency-dollar" class="h-12 w-12 mb-3" />
+                        <h3 class="font-bold">Budget</h3>
+                        <p class="text-sm opacity-80">$20-35 per container</p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label class="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="budget"
+                      value="medium"
+                      class="sr-only peer"
+                      required
+                    />
+                    <div class="card bg-base-200 peer-checked:bg-warning peer-checked:text-warning-content transition-all duration-200 hover:bg-base-300 peer-checked:hover:bg-warning/90">
+                      <div class="card-body items-center text-center p-6">
+                        <.icon name="hero-banknotes" class="h-12 w-12 mb-3" />
+                        <h3 class="font-bold">Mid-Range</h3>
+                        <p class="text-sm opacity-80">$35-50 per container</p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label class="cursor-pointer">
+                    <input type="radio" name="budget" value="high" class="sr-only peer" required />
+                    <div class="card bg-base-200 peer-checked:bg-error peer-checked:text-error-content transition-all duration-200 hover:bg-base-300 peer-checked:hover:bg-error/90">
+                      <div class="card-body items-center text-center p-6">
+                        <.icon name="hero-star" class="h-12 w-12 mb-3" />
+                        <h3 class="font-bold">Premium</h3>
+                        <p class="text-sm opacity-80">$50+ per container</p>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+
+                <div class="card-actions justify-between mt-6">
+                  <button type="button" phx-click="prev_step" class="btn btn-outline">
+                    <.icon name="hero-arrow-left" class="h-4 w-4 mr-1" /> Back
+                  </button>
+                  <button type="submit" class="btn btn-primary">
+                    Next <.icon name="hero-arrow-right" class="h-4 w-4 ml-1" />
+                  </button>
+                </div>
+              </form>
+            <% 6 -> %>
+              <!-- Workout Timing -->
+              <h2 class="card-title text-2xl mb-2">When do you usually work out?</h2>
+              <p class="text-base-content/70 mb-6">
+                This helps us consider how stimulants might affect your sleep.
+              </p>
+
+              <form phx-submit="next_step" class="space-y-4">
+                <input type="hidden" name="step" value="6" />
+
+                <div class="grid gap-4 md:grid-cols-3">
+                  <label class="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="timing"
+                      value="morning"
+                      class="sr-only peer"
+                      required
+                    />
+                    <div class="card bg-base-200 peer-checked:bg-primary peer-checked:text-primary-content transition-all duration-200 hover:bg-base-300 peer-checked:hover:bg-primary/90">
+                      <div class="card-body items-center text-center p-6">
+                        <.icon name="hero-sun" class="h-12 w-12 mb-3" />
+                        <h3 class="font-bold">Morning</h3>
+                        <p class="text-sm opacity-80">6 AM - 11 AM</p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label class="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="timing"
+                      value="afternoon"
+                      class="sr-only peer"
+                      required
+                    />
+                    <div class="card bg-base-200 peer-checked:bg-primary peer-checked:text-primary-content transition-all duration-200 hover:bg-base-300 peer-checked:hover:bg-primary/90">
+                      <div class="card-body items-center text-center p-6">
+                        <.icon name="hero-clock" class="h-12 w-12 mb-3" />
+                        <h3 class="font-bold">Afternoon</h3>
+                        <p class="text-sm opacity-80">12 PM - 5 PM</p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label class="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="timing"
+                      value="evening"
+                      class="sr-only peer"
+                      required
+                    />
+                    <div class="card bg-base-200 peer-checked:bg-primary peer-checked:text-primary-content transition-all duration-200 hover:bg-base-300 peer-checked:hover:bg-primary/90">
+                      <div class="card-body items-center text-center p-6">
+                        <.icon name="hero-moon" class="h-12 w-12 mb-3" />
+                        <h3 class="font-bold">Evening</h3>
+                        <p class="text-sm opacity-80">6 PM - 10 PM</p>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+
+                <div class="card-actions justify-between mt-6">
+                  <button type="button" phx-click="prev_step" class="btn btn-outline">
+                    <.icon name="hero-arrow-left" class="h-4 w-4 mr-1" /> Back
+                  </button>
+                  <button type="submit" class="btn btn-primary">
+                    Get My Recommendations <.icon name="hero-sparkles" class="h-4 w-4 ml-1" />
+                  </button>
+                </div>
+              </form>
+          <% end %>
+        </div>
+      </div>
+    </div>
+    
+<!-- Loading State -->
+    <div :if={@loading} class="text-center py-12">
+      <div class="loading loading-spinner loading-lg text-primary mb-4"></div>
+      <h3 class="text-xl font-semibold mb-2">Finding Your Perfect Pre-Workout...</h3>
+      <p class="text-base-content/70">Analyzing ingredients and matching your preferences</p>
+    </div>
+    
+<!-- Results Section -->
+    <div :if={@show_results and not @loading} class="space-y-8">
+      <!-- Results Header -->
+      <div class="text-center">
+        <h2 class="text-3xl font-bold text-primary mb-2">Your Personalized Recommendations</h2>
+        <p class="text-base-content/70 mb-4">
+          Based on your preferences, here are the best matches for you
+        </p>
+        <div class="flex justify-center gap-2">
+          <button phx-click="restart_wizard" class="btn btn-outline btn-sm">
+            <.icon name="hero-arrow-path" class="h-4 w-4 mr-1" /> Start Over
+          </button>
+          <.link navigate={~p"/product_finder"} class="btn btn-secondary btn-sm">
+            <.icon name="hero-table-cells" class="h-4 w-4 mr-1" /> View All Products
+          </.link>
+        </div>
+      </div>
+      
+<!-- Recommendations Grid -->
+      <div :if={@recommendations != []} class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <%= for {rec, index} <- Enum.with_index(@recommendations) do %>
+          <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-200">
+            <!-- Rank Badge -->
+            <div class="absolute top-4 left-4 z-10">
+              <div class={[
+                "badge badge-lg font-bold",
+                case index do
+                  0 -> "badge-primary"
+                  1 -> "badge-secondary"
+                  2 -> "badge-accent"
+                  _ -> "badge-neutral"
+                end
+              ]}>
+                #{index + 1} Match
+              </div>
+            </div>
+            
+<!-- Product Image -->
+            <figure class="px-4 pt-8">
+              <%= if rec.product.image_url do %>
+                <img
+                  src={rec.product.image_url}
+                  alt={rec.product.name}
+                  class="rounded-xl h-32 w-32 object-cover"
+                />
+              <% else %>
+                <div class="h-32 w-32 bg-base-300 rounded-xl flex items-center justify-center">
+                  <.icon name="hero-photo" class="h-12 w-12 text-base-content/30" />
+                </div>
+              <% end %>
+            </figure>
+
+            <div class="card-body">
+              <!-- Product Info -->
+              <div class="text-center mb-4">
+                <h3 class="card-title text-lg justify-center">{rec.product.name}</h3>
+                <p class="text-sm text-base-content/70">{rec.product.brand.name}</p>
+                <p class="text-xl font-bold text-primary mt-1">
+                  {format_price(rec.product.price)}
+                </p>
+              </div>
+              
+<!-- Match Score -->
+              <div class="mb-4">
+                <div class="flex justify-between items-center mb-1">
+                  <span class="text-sm font-medium">Match Score</span>
+                  <span class="text-sm font-bold">{round(rec.score)}%</span>
+                </div>
+                <div class="w-full bg-base-300 rounded-full h-2">
+                  <div
+                    class="bg-primary h-2 rounded-full transition-all duration-500"
+                    style={"width: #{rec.score}%"}
+                  >
+                  </div>
+                </div>
+              </div>
+              
+<!-- Why This Product -->
+              <div class="mb-4">
+                <h4 class="font-semibold text-sm mb-2">Why this product?</h4>
+                <ul class="text-xs space-y-1">
+                  <%= for reason <- rec.reasons do %>
+                    <li class="flex items-start">
+                      <.icon
+                        name="hero-check-circle"
+                        class="h-3 w-3 text-success mt-0.5 mr-1 flex-shrink-0"
+                      />
+                      <span>{reason}</span>
+                    </li>
+                  <% end %>
+                </ul>
+              </div>
+              
+<!-- Key Ingredients -->
+              <div class="mb-4">
+                <h4 class="font-semibold text-sm mb-2">Key Ingredients</h4>
+                <div class="flex flex-wrap gap-1">
+                  <%= for pi <- Enum.take(rec.product.product_ingredients, 4) do %>
+                    <div class="badge badge-outline badge-xs">
+                      {pi.ingredient.name}
+                    </div>
+                  <% end %>
+                  <%= if length(rec.product.product_ingredients) > 4 do %>
+                    <div class="badge badge-neutral badge-xs">
+                      +{length(rec.product.product_ingredients) - 4} more
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+              
+<!-- Actions -->
+              <div class="card-actions justify-center">
+                <.link navigate={~p"/products/#{rec.product}"} class="btn btn-primary btn-sm">
+                  View Details
+                </.link>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+      
+<!-- No Results -->
+      <div :if={@recommendations == []} class="text-center py-12">
+        <.icon name="hero-magnifying-glass" class="h-16 w-16 text-base-content/30 mx-auto mb-4" />
+        <h3 class="text-xl font-semibold mb-2">No Perfect Matches Found</h3>
+        <p class="text-base-content/70 mb-4">
+          We couldn't find products that match all your criteria perfectly.
+        </p>
+        <div class="space-x-2">
+          <button phx-click="restart_wizard" class="btn btn-primary">
+            Try Different Preferences
+          </button>
+          <.link navigate={~p"/product_finder"} class="btn btn-outline">
+            Browse All Products
+          </.link>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layouts.app>

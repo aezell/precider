@@ -89,7 +89,9 @@ defmodule Precider.CatalogTest do
       ingredient = ingredient_fixture()
       update_attrs = %{name: "some updated name"}
 
-      assert {:ok, %Ingredient{} = ingredient} = Catalog.update_ingredient(ingredient, update_attrs)
+      assert {:ok, %Ingredient{} = ingredient} =
+               Catalog.update_ingredient(ingredient, update_attrs)
+
       assert ingredient.name == "some updated name"
     end
 
@@ -185,7 +187,9 @@ defmodule Precider.CatalogTest do
     test "create_product_ingredient/1 with valid data creates a product_ingredient" do
       valid_attrs = %{dosage_amount: "120.5"}
 
-      assert {:ok, %ProductIngredient{} = product_ingredient} = Catalog.create_product_ingredient(valid_attrs)
+      assert {:ok, %ProductIngredient{} = product_ingredient} =
+               Catalog.create_product_ingredient(valid_attrs)
+
       assert product_ingredient.dosage_amount == Decimal.new("120.5")
     end
 
@@ -197,20 +201,28 @@ defmodule Precider.CatalogTest do
       product_ingredient = product_ingredient_fixture()
       update_attrs = %{dosage_amount: "456.7"}
 
-      assert {:ok, %ProductIngredient{} = product_ingredient} = Catalog.update_product_ingredient(product_ingredient, update_attrs)
+      assert {:ok, %ProductIngredient{} = product_ingredient} =
+               Catalog.update_product_ingredient(product_ingredient, update_attrs)
+
       assert product_ingredient.dosage_amount == Decimal.new("456.7")
     end
 
     test "update_product_ingredient/2 with invalid data returns error changeset" do
       product_ingredient = product_ingredient_fixture()
-      assert {:error, %Ecto.Changeset{}} = Catalog.update_product_ingredient(product_ingredient, @invalid_attrs)
+
+      assert {:error, %Ecto.Changeset{}} =
+               Catalog.update_product_ingredient(product_ingredient, @invalid_attrs)
+
       assert product_ingredient == Catalog.get_product_ingredient!(product_ingredient.id)
     end
 
     test "delete_product_ingredient/1 deletes the product_ingredient" do
       product_ingredient = product_ingredient_fixture()
       assert {:ok, %ProductIngredient{}} = Catalog.delete_product_ingredient(product_ingredient)
-      assert_raise Ecto.NoResultsError, fn -> Catalog.get_product_ingredient!(product_ingredient.id) end
+
+      assert_raise Ecto.NoResultsError, fn ->
+        Catalog.get_product_ingredient!(product_ingredient.id)
+      end
     end
 
     test "change_product_ingredient/1 returns a product_ingredient changeset" do

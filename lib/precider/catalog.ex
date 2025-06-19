@@ -42,6 +42,7 @@ defmodule Precider.Catalog do
   end
 
   defp maybe_filter_completed(query, nil), do: query
+
   defp maybe_filter_completed(query, completed) when is_binary(completed) do
     completed = completed == "true"
     from b in query, where: b.completed == ^completed
@@ -276,6 +277,7 @@ defmodule Precider.Catalog do
 
   defp filter_by_name(query, nil), do: query
   defp filter_by_name(query, ""), do: query
+
   defp filter_by_name(query, name) do
     from p in query,
       where: ilike(p.name, ^"%#{name}%")
@@ -300,7 +302,8 @@ defmodule Precider.Catalog do
             on: pi.ingredient_id == ^ingredient_id,
             where: is_nil(pi.id)
 
-        _ -> query
+        _ ->
+          query
       end
     end)
   end
@@ -308,32 +311,45 @@ defmodule Precider.Catalog do
   defp build_dosage_where_clause(min, max, unit) when not is_nil(unit) do
     conditions = []
 
-    conditions = if min && min != "" do
-      min_mg = convert_to_mg(Decimal.new(min), String.to_atom(unit))
-      [dynamic([p, pi], 
-        (pi.dosage_unit == :mg and fragment("? >= ?", pi.dosage_amount, ^min_mg)) or
-        (pi.dosage_unit == :g and fragment("? * 1000.0 >= ?", pi.dosage_amount, ^min_mg)) or
-        (pi.dosage_unit == :mcg and fragment("? / 1000.0 >= ?", pi.dosage_amount, ^min_mg))
-      ) | conditions]
-    else
-      conditions
-    end
+    conditions =
+      if min && min != "" do
+        min_mg = convert_to_mg(Decimal.new(min), String.to_atom(unit))
 
-    conditions = if max && max != "" do
-      max_mg = convert_to_mg(Decimal.new(max), String.to_atom(unit))
-      [dynamic([p, pi], 
-        (pi.dosage_unit == :mg and fragment("? <= ?", pi.dosage_amount, ^max_mg)) or
-        (pi.dosage_unit == :g and fragment("? * 1000.0 >= ?", pi.dosage_amount, ^max_mg)) or
-        (pi.dosage_unit == :mcg and fragment("? / 1000.0 <= ?", pi.dosage_amount, ^max_mg))
-      ) | conditions]
-    else
-      conditions
-    end
+        [
+          dynamic(
+            [p, pi],
+            (pi.dosage_unit == :mg and fragment("? >= ?", pi.dosage_amount, ^min_mg)) or
+              (pi.dosage_unit == :g and fragment("? * 1000.0 >= ?", pi.dosage_amount, ^min_mg)) or
+              (pi.dosage_unit == :mcg and fragment("? / 1000.0 >= ?", pi.dosage_amount, ^min_mg))
+          )
+          | conditions
+        ]
+      else
+        conditions
+      end
+
+    conditions =
+      if max && max != "" do
+        max_mg = convert_to_mg(Decimal.new(max), String.to_atom(unit))
+
+        [
+          dynamic(
+            [p, pi],
+            (pi.dosage_unit == :mg and fragment("? <= ?", pi.dosage_amount, ^max_mg)) or
+              (pi.dosage_unit == :g and fragment("? * 1000.0 >= ?", pi.dosage_amount, ^max_mg)) or
+              (pi.dosage_unit == :mcg and fragment("? / 1000.0 <= ?", pi.dosage_amount, ^max_mg))
+          )
+          | conditions
+        ]
+      else
+        conditions
+      end
 
     IO.inspect(conditions, label: "conditions")
 
     Enum.reduce(conditions, true, &dynamic([p, pi], ^&1 and ^&2))
   end
+
   defp build_dosage_where_clause(_min, _max, _unit), do: true
 
   defp convert_to_mg(amount, unit) do
@@ -378,26 +394,29 @@ defmodule Precider.Catalog do
   """
   def create_product(attrs) do
     # Transform the ingredient data into the format expected by cast_assoc
-    attrs = if Map.has_key?(attrs, "ingredients") do
-      product_ingredients = attrs
-        |> Map.get("ingredients", %{})
-        |> Map.values()
-        |> Enum.map(fn ingredient ->
-          %{
-            "ingredient_id" => ingredient["ingredient_id"],
-            "dosage_amount" => case ingredient["dosage"] do
-              "" -> nil
-              nil -> nil
-              value -> Decimal.new(to_string(value))
-            end,
-            "dosage_unit" => String.to_atom(ingredient["unit"] || "mg")
-          }
-        end)
+    attrs =
+      if Map.has_key?(attrs, "ingredients") do
+        product_ingredients =
+          attrs
+          |> Map.get("ingredients", %{})
+          |> Map.values()
+          |> Enum.map(fn ingredient ->
+            %{
+              "ingredient_id" => ingredient["ingredient_id"],
+              "dosage_amount" =>
+                case ingredient["dosage"] do
+                  "" -> nil
+                  nil -> nil
+                  value -> Decimal.new(to_string(value))
+                end,
+              "dosage_unit" => String.to_atom(ingredient["unit"] || "mg")
+            }
+          end)
 
-      Map.put(attrs, "product_ingredients", product_ingredients)
-    else
-      attrs
-    end
+        Map.put(attrs, "product_ingredients", product_ingredients)
+      else
+        attrs
+      end
 
     %Product{}
     |> Product.changeset(attrs)
@@ -418,26 +437,29 @@ defmodule Precider.Catalog do
   """
   def update_product(%Product{} = product, attrs) do
     # Transform the ingredient data into the format expected by cast_assoc
-    attrs = if Map.has_key?(attrs, "ingredients") do
-      product_ingredients = attrs
-        |> Map.get("ingredients", %{})
-        |> Map.values()
-        |> Enum.map(fn ingredient ->
-          %{
-            "ingredient_id" => ingredient["ingredient_id"],
-            "dosage_amount" => case ingredient["dosage"] do
-              "" -> nil
-              nil -> nil
-              value -> Decimal.new(to_string(value))
-            end,
-            "dosage_unit" => String.to_atom(ingredient["unit"] || "mg")
-          }
-        end)
+    attrs =
+      if Map.has_key?(attrs, "ingredients") do
+        product_ingredients =
+          attrs
+          |> Map.get("ingredients", %{})
+          |> Map.values()
+          |> Enum.map(fn ingredient ->
+            %{
+              "ingredient_id" => ingredient["ingredient_id"],
+              "dosage_amount" =>
+                case ingredient["dosage"] do
+                  "" -> nil
+                  nil -> nil
+                  value -> Decimal.new(to_string(value))
+                end,
+              "dosage_unit" => String.to_atom(ingredient["unit"] || "mg")
+            }
+          end)
 
-      Map.put(attrs, "product_ingredients", product_ingredients)
-    else
-      attrs
-    end
+        Map.put(attrs, "product_ingredients", product_ingredients)
+      else
+        attrs
+      end
 
     product
     |> Product.changeset(attrs)

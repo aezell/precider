@@ -17,6 +17,7 @@ defmodule Precider.Repo.Migrations.ChangeDosageUnitToEnumInProductIngredients do
     ALTER TABLE product_ingredients
     ALTER COLUMN dosage_unit TYPE varchar;
     """)
+
     execute("DROP TYPE dosage_unit_enum;")
   end
 end

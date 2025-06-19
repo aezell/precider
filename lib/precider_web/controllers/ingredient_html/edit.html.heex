@@ -4,5 +4,9 @@
     <:subtitle>Use this form to manage ingredient records in your database.</:subtitle>
   </.header>
 
-  <.ingredient_form changeset={@changeset} action={~p"/ingredients/#{@ingredient}"} return_to={~p"/ingredients"} />
+  <.ingredient_form
+    changeset={@changeset}
+    action={~p"/ingredients/#{@ingredient}"}
+    return_to={~p"/ingredients"}
+  />
 </Layouts.app>

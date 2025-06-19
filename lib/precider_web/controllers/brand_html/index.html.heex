@@ -14,7 +14,10 @@
       href={~p"/brands"}
       class={[
         "rounded-md px-3 py-2 text-sm font-medium",
-        if(@completed_filter == nil, do: "bg-gray-100 text-gray-900", else: "text-gray-500 hover:bg-gray-50")
+        if(@completed_filter == nil,
+          do: "bg-gray-100 text-gray-900",
+          else: "text-gray-500 hover:bg-gray-50"
+        )
       ]}
     >
       All
@@ -23,7 +26,10 @@
       href={~p"/brands?completed=true"}
       class={[
         "rounded-md px-3 py-2 text-sm font-medium",
-        if(@completed_filter == "true", do: "bg-gray-100 text-gray-900", else: "text-gray-500 hover:bg-gray-50")
+        if(@completed_filter == "true",
+          do: "bg-gray-100 text-gray-900",
+          else: "text-gray-500 hover:bg-gray-50"
+        )
       ]}
     >
       Completed
@@ -32,7 +38,10 @@
       href={~p"/brands?completed=false"}
       class={[
         "rounded-md px-3 py-2 text-sm font-medium",
-        if(@completed_filter == "false", do: "bg-gray-100 text-gray-900", else: "text-gray-500 hover:bg-gray-50")
+        if(@completed_filter == "false",
+          do: "bg-gray-100 text-gray-900",
+          else: "text-gray-500 hover:bg-gray-50"
+        )
       ]}
     >
       Incomplete
@@ -43,7 +52,9 @@
     <:col :let={brand} label="Name">{brand.name}</:col>
     <:col :let={brand} label="Website">
       <%= if brand.website do %>
-        <.link href={brand.website} target="_blank" rel="noopener noreferrer">{brand.website}</.link>
+        <.link href={brand.website} target="_blank" rel="noopener noreferrer">
+          {brand.website}
+        </.link>
       <% end %>
     </:col>
     <:col :let={brand} label="Products Added">
@@ -52,7 +63,10 @@
         method="post"
         class={[
           "inline-flex items-center rounded-full p-1",
-          if(brand.completed, do: "text-green-500 hover:text-green-600", else: "text-red-500 hover:text-red-600")
+          if(brand.completed,
+            do: "text-green-500 hover:text-green-600",
+            else: "text-red-500 hover:text-red-600"
+          )
         ]}
       >
         <%= if brand.completed do %>
@@ -74,13 +88,16 @@
     </:action>
     <:action :let={brand}>
       <%= if !brand.completed do %>
-        <.link navigate={~p"/products/new?brand_id=#{brand.id}"} class="text-indigo-600 hover:text-indigo-900">
+        <.link
+          navigate={~p"/products/new?brand_id=#{brand.id}"}
+          class="text-indigo-600 hover:text-indigo-900"
+        >
           <.icon name="hero-plus" class="h-5 w-5" />
         </.link>
       <% end %>
     </:action>
     <:action :let={brand}>
-      <button 
+      <button
         class="text-red-600 hover:text-red-900"
         onclick={"document.getElementById('delete-modal-#{brand.id}').showModal()"}
       >
@@ -90,15 +107,11 @@
       <dialog id={"delete-modal-#{brand.id}"} class="modal">
         <div class="modal-box">
           <h3 class="font-bold text-lg">Delete Brand</h3>
-          <p class="py-4">Are you sure you want to delete "<%= brand.name %>"?</p>
+          <p class="py-4">Are you sure you want to delete "{brand.name}"?</p>
           <div class="modal-action">
             <form method="dialog" class="flex gap-2">
               <button class="btn btn-ghost">Cancel</button>
-              <.link
-                href={~p"/brands/#{brand}"}
-                method="delete"
-                class="btn btn-error"
-              >
+              <.link href={~p"/brands/#{brand}"} method="delete" class="btn btn-error">
                 Delete
               </.link>
             </form>

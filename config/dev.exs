@@ -9,7 +9,8 @@ config :precider, Precider.Repo,
   # stacktrace: true,
   # show_sensitive_data_on_connection_error: true,
   # pool_size: 10
-  url: "postgresql://postgres.pjgpnswinaaqymypfopx:tfx*qme1WFV.thk4tng@aws-0-us-east-2.pooler.supabase.com:5432/postgres",
+  url:
+    "postgresql://postgres.pjgpnswinaaqymypfopx:tfx*qme1WFV.thk4tng@aws-0-us-east-2.pooler.supabase.com:5432/postgres",
   ssl_opts: [verify: :verify_none],
   ssl: true
 

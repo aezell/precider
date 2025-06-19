@@ -8,8 +8,14 @@
     </:actions>
   </.header>
 
-  <.table id="product_ingredients" rows={@product_ingredients} row_click={&JS.navigate(~p"/product_ingredients/#{&1}")}>
-    <:col :let={product_ingredient} label="Dosage amount">{product_ingredient.dosage_amount}</:col>
+  <.table
+    id="product_ingredients"
+    rows={@product_ingredients}
+    row_click={&JS.navigate(~p"/product_ingredients/#{&1}")}
+  >
+    <:col :let={product_ingredient} label="Dosage amount">
+      {product_ingredient.dosage_amount}
+    </:col>
     <:action :let={product_ingredient}>
       <div class="sr-only">
         <.link navigate={~p"/product_ingredients/#{product_ingredient}"}>Show</.link>
@@ -17,7 +23,11 @@
       <.link navigate={~p"/product_ingredients/#{product_ingredient}/edit"}>Edit</.link>
     </:action>
     <:action :let={product_ingredient}>
-      <.link href={~p"/product_ingredients/#{product_ingredient}"} method="delete" data-confirm="Are you sure?">
+      <.link
+        href={~p"/product_ingredients/#{product_ingredient}"}
+        method="delete"
+        data-confirm="Are you sure?"
+      >
         Delete
       </.link>
     </:action>

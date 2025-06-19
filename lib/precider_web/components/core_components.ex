@@ -98,6 +98,7 @@ defmodule PreciderWeb.CoreComponents do
       "secondary" => "btn-secondary",
       nil => "btn-primary btn-soft"
     }
+
     assigns = assign(assigns, :class, Map.fetch!(variants, assigns[:variant]))
 
     if rest[:href] || rest[:navigate] || rest[:patch] do

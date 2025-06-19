@@ -30,12 +30,13 @@ defmodule PreciderWeb.Router do
     get "/", PageController, :home
 
     live "/product_finder", ProductLive.Index, :index
+    live "/pre-chooser", PreChooserLive.Index, :index
   end
 
   # Other scopes may use custom stacks.
   scope "/api", PreciderWeb do
     pipe_through :api
-    
+
     post "/import", ImportController, :import
     post "/products/new/create_ingredient", ProductController, :create_ingredient
   end

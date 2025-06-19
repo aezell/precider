@@ -13,12 +13,12 @@
       <:col :let={ingredient} label="Name">{ingredient.name}</:col>
       <:col :let={ingredient} label="Description">
         <div class="truncate max-w-xl" title={ingredient.description}>
-          <%= ingredient.description %>
+          {ingredient.description}
         </div>
       </:col>
       <:col :let={ingredient} label="Benefits">
         <div class="truncate max-w-xl" title={ingredient.benefits}>
-          <%= ingredient.benefits %>
+          {ingredient.benefits}
         </div>
       </:col>
       <:action :let={ingredient}>

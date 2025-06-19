@@ -25,9 +25,19 @@ defmodule Precider.Catalog.Product do
 
   def changeset(product, attrs) do
     product
-    |> cast(attrs, [:name, :description, :url, :image_url, :price, :serving_size, 
-                    :servings_per_container, :weight_in_grams, 
-                    :is_active, :brand_id, :slug])
+    |> cast(attrs, [
+      :name,
+      :description,
+      :url,
+      :image_url,
+      :price,
+      :serving_size,
+      :servings_per_container,
+      :weight_in_grams,
+      :is_active,
+      :brand_id,
+      :slug
+    ])
     |> validate_required([:name, :price, :brand_id])
     |> foreign_key_constraint(:brand_id)
     |> unique_constraint([:name, :brand_id])
@@ -40,6 +50,6 @@ defmodule Precider.Catalog.Product do
     slug = name |> String.downcase() |> String.replace(~r/[^a-z0-9]+/, "-") |> String.trim("-")
     put_change(changeset, :slug, slug)
   end
-  
+
   defp put_slug(changeset), do: changeset
 end

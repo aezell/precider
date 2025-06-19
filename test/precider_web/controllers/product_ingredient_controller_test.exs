@@ -41,7 +41,10 @@ defmodule PreciderWeb.ProductIngredientControllerTest do
   describe "edit product_ingredient" do
     setup [:create_product_ingredient]
 
-    test "renders form for editing chosen product_ingredient", %{conn: conn, product_ingredient: product_ingredient} do
+    test "renders form for editing chosen product_ingredient", %{
+      conn: conn,
+      product_ingredient: product_ingredient
+    } do
       conn = get(conn, ~p"/product_ingredients/#{product_ingredient}/edit")
       assert html_response(conn, 200) =~ "Edit Product ingredient"
     end
@@ -51,15 +54,26 @@ defmodule PreciderWeb.ProductIngredientControllerTest do
     setup [:create_product_ingredient]
 
     test "redirects when data is valid", %{conn: conn, product_ingredient: product_ingredient} do
-      conn = put(conn, ~p"/product_ingredients/#{product_ingredient}", product_ingredient: @update_attrs)
+      conn =
+        put(conn, ~p"/product_ingredients/#{product_ingredient}",
+          product_ingredient: @update_attrs
+        )
+
       assert redirected_to(conn) == ~p"/product_ingredients/#{product_ingredient}"
 
       conn = get(conn, ~p"/product_ingredients/#{product_ingredient}")
       assert html_response(conn, 200)
     end
 
-    test "renders errors when data is invalid", %{conn: conn, product_ingredient: product_ingredient} do
-      conn = put(conn, ~p"/product_ingredients/#{product_ingredient}", product_ingredient: @invalid_attrs)
+    test "renders errors when data is invalid", %{
+      conn: conn,
+      product_ingredient: product_ingredient
+    } do
+      conn =
+        put(conn, ~p"/product_ingredients/#{product_ingredient}",
+          product_ingredient: @invalid_attrs
+        )
+
       assert html_response(conn, 200) =~ "Edit Product ingredient"
     end
   end
@@ -67,7 +81,10 @@ defmodule PreciderWeb.ProductIngredientControllerTest do
   describe "delete product_ingredient" do
     setup [:create_product_ingredient]
 
-    test "deletes chosen product_ingredient", %{conn: conn, product_ingredient: product_ingredient} do
+    test "deletes chosen product_ingredient", %{
+      conn: conn,
+      product_ingredient: product_ingredient
+    } do
       conn = delete(conn, ~p"/product_ingredients/#{product_ingredient}")
       assert redirected_to(conn) == ~p"/product_ingredients"
 

@@ -13,14 +13,15 @@ defmodule PreciderWeb.ProductController do
     changeset = Catalog.change_product(%Product{})
     brands = Catalog.list_brands()
     ingredients = Catalog.list_ingredients()
-    
+
     # Pre-select brand if brand_id is provided
-    changeset = if brand_id = params["brand_id"] do
-      changeset |> Ecto.Changeset.put_change(:brand_id, brand_id)
-    else
-      changeset
-    end
-    
+    changeset =
+      if brand_id = params["brand_id"] do
+        changeset |> Ecto.Changeset.put_change(:brand_id, brand_id)
+      else
+        changeset
+      end
+
     render(conn, :new,
       changeset: changeset,
       brand_options: Enum.map(brands, &{&1.name, &1.id}),
@@ -44,38 +45,49 @@ defmodule PreciderWeb.ProductController do
       {:error, %Ecto.Changeset{} = changeset} ->
         brands = Catalog.list_brands()
         ingredients = Catalog.list_ingredients()
-        
+
         # Extract ingredient data from the changeset errors if present
-        ingredient_errors = case Ecto.Changeset.get_change(changeset, :product_ingredients) do
-          nil -> %{}
-          ingredients -> 
-            Enum.reduce(ingredients, %{}, fn ingredient, acc ->
-              case ingredient do
-                %Ecto.Changeset{errors: errors, changes: %{ingredient_id: id}} when errors != [] ->
-                  # Convert errors to the format expected by the template
-                  formatted_errors = Enum.reduce(errors, %{}, fn {field, {msg, _opts}}, acc ->
-                    Map.put(acc, field, {msg, []})
-                  end)
-                  Map.put(acc, id, formatted_errors)
-                _ -> acc
-              end
-            end)
-        end
-        
+        ingredient_errors =
+          case Ecto.Changeset.get_change(changeset, :product_ingredients) do
+            nil ->
+              %{}
+
+            ingredients ->
+              Enum.reduce(ingredients, %{}, fn ingredient, acc ->
+                case ingredient do
+                  %Ecto.Changeset{errors: errors, changes: %{ingredient_id: id}}
+                  when errors != [] ->
+                    # Convert errors to the format expected by the template
+                    formatted_errors =
+                      Enum.reduce(errors, %{}, fn {field, {msg, _opts}}, acc ->
+                        Map.put(acc, field, {msg, []})
+                      end)
+
+                    Map.put(acc, id, formatted_errors)
+
+                  _ ->
+                    acc
+                end
+              end)
+          end
+
         # Convert string IDs to integers for selected_ingredient_ids
-        selected_ingredient_ids = product_params
+        selected_ingredient_ids =
+          product_params
           |> Map.get("ingredient_ids", [])
           |> Enum.map(&String.to_integer/1)
-        
+
         # Convert string keys to integers for ingredient_dosages and ingredient_units
-        ingredient_dosages = product_params
+        ingredient_dosages =
+          product_params
           |> Map.get("ingredient_dosages", %{})
           |> Map.new(fn {k, v} -> {String.to_integer(k), v} end)
-        
-        ingredient_units = product_params
+
+        ingredient_units =
+          product_params
           |> Map.get("ingredient_units", %{})
           |> Map.new(fn {k, v} -> {String.to_integer(k), to_string(v)} end)
-        
+
         render(conn, :new,
           changeset: changeset,
           brand_options: Enum.map(brands, &{&1.name, &1.id}),
@@ -100,13 +112,15 @@ defmodule PreciderWeb.ProductController do
     changeset = Catalog.change_product(product)
     brands = Catalog.list_brands()
     ingredients = Catalog.list_ingredients()
-    
+
     # Get existing product ingredients
     product_ingredients = Catalog.get_product_ingredients(product)
     selected_ingredient_ids = Enum.map(product_ingredients, & &1.ingredient_id)
     ingredient_dosages = Map.new(product_ingredients, &{&1.ingredient_id, &1.dosage_amount})
-    ingredient_units = Map.new(product_ingredients, &{&1.ingredient_id, to_string(&1.dosage_unit)})
-    
+
+    ingredient_units =
+      Map.new(product_ingredients, &{&1.ingredient_id, to_string(&1.dosage_unit)})
+
     render(conn, :edit,
       product: product,
       changeset: changeset,
@@ -133,38 +147,49 @@ defmodule PreciderWeb.ProductController do
       {:error, %Ecto.Changeset{} = changeset} ->
         brands = Catalog.list_brands()
         ingredients = Catalog.list_ingredients()
-        
+
         # Extract ingredient data from the changeset errors if present
-        ingredient_errors = case Ecto.Changeset.get_change(changeset, :product_ingredients) do
-          nil -> %{}
-          ingredients -> 
-            Enum.reduce(ingredients, %{}, fn ingredient, acc ->
-              case ingredient do
-                %Ecto.Changeset{errors: errors, changes: %{ingredient_id: id}} when errors != [] ->
-                  # Convert errors to the format expected by the template
-                  formatted_errors = Enum.reduce(errors, %{}, fn {field, {msg, _opts}}, acc ->
-                    Map.put(acc, field, {msg, []})
-                  end)
-                  Map.put(acc, id, formatted_errors)
-                _ -> acc
-              end
-            end)
-        end
-        
+        ingredient_errors =
+          case Ecto.Changeset.get_change(changeset, :product_ingredients) do
+            nil ->
+              %{}
+
+            ingredients ->
+              Enum.reduce(ingredients, %{}, fn ingredient, acc ->
+                case ingredient do
+                  %Ecto.Changeset{errors: errors, changes: %{ingredient_id: id}}
+                  when errors != [] ->
+                    # Convert errors to the format expected by the template
+                    formatted_errors =
+                      Enum.reduce(errors, %{}, fn {field, {msg, _opts}}, acc ->
+                        Map.put(acc, field, {msg, []})
+                      end)
+
+                    Map.put(acc, id, formatted_errors)
+
+                  _ ->
+                    acc
+                end
+              end)
+          end
+
         # Convert string IDs to integers for selected_ingredient_ids
-        selected_ingredient_ids = product_params
+        selected_ingredient_ids =
+          product_params
           |> Map.get("ingredient_ids", [])
           |> Enum.map(&String.to_integer/1)
-        
+
         # Convert string keys to integers for ingredient_dosages and ingredient_units
-        ingredient_dosages = product_params
+        ingredient_dosages =
+          product_params
           |> Map.get("ingredient_dosages", %{})
           |> Map.new(fn {k, v} -> {String.to_integer(k), v} end)
-        
-        ingredient_units = product_params
+
+        ingredient_units =
+          product_params
           |> Map.get("ingredient_units", %{})
           |> Map.new(fn {k, v} -> {String.to_integer(k), to_string(v)} end)
-        
+
         render(conn, :edit,
           product: product,
           changeset: changeset,
