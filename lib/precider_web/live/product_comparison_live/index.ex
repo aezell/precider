@@ -124,15 +124,64 @@ defmodule PreciderWeb.ProductComparisonLive.Index do
     end
   end
 
-  defp ingredient_category_color(category) do
+  defp build_ingredient_tooltip(ingredient) do
+    parts = []
+
+    # Add category if present
+    parts =
+      if ingredient.category && ingredient.category != "" do
+        category_name = ingredient.category |> String.replace("_", " ") |> String.capitalize()
+        category_badge = build_category_badge(ingredient.category, category_name)
+        [category_badge | parts]
+      else
+        parts
+      end
+
+    # Add description if present
+    parts =
+      if ingredient.description && ingredient.description != "" do
+        [ingredient.description | parts]
+      else
+        parts
+      end
+
+    # Add benefits if present
+    parts =
+      if ingredient.benefits && ingredient.benefits != "" do
+        ["✨ Benefits: #{ingredient.benefits}" | parts]
+      else
+        parts
+      end
+
+    # Join with line breaks and separators, or return default if no info available
+    case parts do
+      [] ->
+        "No additional information available"
+
+      [single] ->
+        single
+
+      _ ->
+        parts
+        |> Enum.reverse()
+        |> Enum.join("\n\n")
+    end
+  end
+
+  defp build_category_badge(category, category_name) do
+    emoji = category_emoji(category)
+    "#{emoji} #{category_name}"
+  end
+
+  defp category_emoji(category) do
     case category do
-      "energy" -> "text-red-600 bg-red-50"
-      "focus" -> "text-blue-600 bg-blue-50"
-      "pump" -> "text-pink-600 bg-pink-50"
-      "strength" -> "text-green-600 bg-green-50"
-      "endurance" -> "text-purple-600 bg-purple-50"
-      "fat_loss" -> "text-orange-600 bg-orange-50"
-      _ -> "text-gray-600 bg-gray-50"
+      "energy" -> "⚡"
+      "focus" -> "🧠"
+      "pump" -> "💪"
+      "strength" -> "🏋️"
+      "endurance" -> "🏃"
+      "fat_loss" -> "🔥"
+      _ -> "🏷️"
     end
   end
 end

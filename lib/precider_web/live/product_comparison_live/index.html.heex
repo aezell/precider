@@ -85,11 +85,14 @@
                   <td class="font-medium">
                     <div class="flex items-center gap-2">
                       <span>{ingredient_row.ingredient.name}</span>
-                      <div class={[
-                        "badge badge-xs text-xs px-2 py-1",
-                        ingredient_category_color(ingredient_row.ingredient.category)
-                      ]}>
-                        {ingredient_row.ingredient.category}
+                      <div
+                        class="tooltip tooltip-right"
+                        data-tip={build_ingredient_tooltip(ingredient_row.ingredient)}
+                      >
+                        <.icon
+                          name="hero-information-circle"
+                          class="h-4 w-4 text-base-content/50 hover:text-primary cursor-help"
+                        />
                       </div>
                     </div>
                   </td>
@@ -185,11 +188,14 @@
                 <div class="flex items-center justify-between mb-3">
                   <div class="flex items-center gap-2">
                     <h3 class="font-bold">{ingredient_row.ingredient.name}</h3>
-                    <div class={[
-                      "badge badge-xs text-xs px-2 py-1",
-                      ingredient_category_color(ingredient_row.ingredient.category)
-                    ]}>
-                      {ingredient_row.ingredient.category}
+                    <div
+                      class="tooltip tooltip-right"
+                      data-tip={build_ingredient_tooltip(ingredient_row.ingredient)}
+                    >
+                      <.icon
+                        name="hero-information-circle"
+                        class="h-4 w-4 text-base-content/50 hover:text-primary cursor-help"
+                      />
                     </div>
                   </div>
                   <%= if ingredient_row.present_in_count > 1 do %>
