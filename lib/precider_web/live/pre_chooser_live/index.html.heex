@@ -1,5 +1,5 @@
 <Layouts.app flash={@flash}>
-  <div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="max-w-7xl mx-auto px-4 py-8">
     <!-- Header -->
     <div class="text-center mb-8">
       <h1 class="text-4xl font-bold text-primary mb-2">Pre-Workout Chooser</h1>
@@ -599,7 +599,7 @@
       </div>
       
 <!-- Recommendations Grid -->
-      <div :if={@recommendations != []} class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div :if={@recommendations != []} class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         <%= for {rec, index} <- Enum.with_index(@recommendations) do %>
           <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-200">
             <!-- Rank Badge -->
@@ -607,9 +607,9 @@
               <div class={[
                 "badge badge-lg font-bold",
                 case index do
-                  0 -> "badge-primary"
+                  0 -> "badge-accent"
                   1 -> "badge-secondary"
-                  2 -> "badge-accent"
+                  2 -> "badge-primary"
                   _ -> "badge-neutral"
                 end
               ]}>
@@ -696,10 +696,16 @@
               </div>
               
 <!-- Actions -->
-              <div class="card-actions justify-center">
-                <.link navigate={~p"/products/#{rec.product}"} class="btn btn-primary btn-sm">
+              <div class="card-actions justify-center gap-2">
+                <.link navigate={~p"/products/#{rec.product}"} class="btn btn-outline btn-sm">
                   View Details
                 </.link>
+                <%= if rec.product.url do %>
+                  <.link href={rec.product.url} target="_blank" class="btn btn-primary btn-sm">
+                    Buy Now
+                    <.icon name="hero-arrow-top-right-on-square" class="h-3 w-3 ml-1" />
+                  </.link>
+                <% end %>
               </div>
             </div>
           </div>
