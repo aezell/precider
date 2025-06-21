@@ -31,6 +31,7 @@ defmodule PreciderWeb.Router do
 
     live "/product_finder", ProductLive.Index, :index
     live "/pre-chooser", PreChooserLive.Index, :index
+    live "/compare", ProductComparisonLive.Index, :index
   end
 
   # Other scopes may use custom stacks.

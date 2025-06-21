@@ -76,6 +76,7 @@ defmodule PreciderWeb.PreChooserLive.Index do
      |> assign(:loading, false)
      |> assign(:recommendations, [])
      |> assign(:show_results, false)
+     |> assign(:selected_products, MapSet.new())
      |> assign(:ingredients, Catalog.list_ingredients())
      |> assign(:products, Catalog.list_products())}
   end
@@ -114,6 +115,7 @@ defmodule PreciderWeb.PreChooserLive.Index do
      |> assign(:answers, %{})
      |> assign(:show_results, false)
      |> assign(:recommendations, [])
+     |> assign(:selected_products, MapSet.new())
      |> assign(:loading, false)}
   end
 
@@ -123,6 +125,32 @@ defmodule PreciderWeb.PreChooserLive.Index do
 
     if step <= socket.assigns.current_step do
       {:noreply, assign(socket, :current_step, step)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_event("toggle_product", %{"product_id" => product_id}, socket) do
+    product_id = String.to_integer(product_id)
+    selected_products = socket.assigns.selected_products
+
+    updated_selection =
+      if MapSet.member?(selected_products, product_id) do
+        MapSet.delete(selected_products, product_id)
+      else
+        MapSet.put(selected_products, product_id)
+      end
+
+    {:noreply, assign(socket, :selected_products, updated_selection)}
+  end
+
+  @impl true
+  def handle_event("compare_selected", _params, socket) do
+    selected_ids = MapSet.to_list(socket.assigns.selected_products)
+
+    if length(selected_ids) >= 2 do
+      {:noreply, push_navigate(socket, to: ~p"/compare?products=#{Enum.join(selected_ids, ",")}")}
     else
       {:noreply, socket}
     end

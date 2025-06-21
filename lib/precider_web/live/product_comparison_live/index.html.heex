@@ -1,0 +1,224 @@
+<Layouts.app flash={@flash}>
+  <div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold text-primary mb-2">Product Comparison</h1>
+      <p class="text-lg text-base-content/70 mb-4">
+        Compare ingredients and details side-by-side
+      </p>
+      <button phx-click="back_to_chooser" class="btn btn-outline btn-sm">
+        <.icon name="hero-arrow-left" class="h-4 w-4 mr-1" /> Back to Chooser
+      </button>
+    </div>
+    
+<!-- Responsive Container -->
+    <div class="overflow-x-auto">
+      <!-- Desktop View -->
+      <div class="hidden lg:block">
+        <!-- Unified Table with Product Headers -->
+        <div class="overflow-x-auto bg-base-100 rounded-lg shadow-xl">
+          <table class="table w-full">
+            <!-- Product Header Row -->
+            <thead>
+              <tr>
+                <th class="text-left font-bold bg-base-200 w-64">Product</th>
+                <%= for product <- @products do %>
+                  <th class="text-center font-bold bg-base-200 min-w-64 p-4">
+                    <div class="flex flex-col items-center space-y-3">
+                      <!-- Product Image -->
+                      <div class="w-20 h-20 flex-shrink-0">
+                        <%= if product.image_url do %>
+                          <img
+                            src={product.image_url}
+                            alt={product.name}
+                            class="rounded-lg h-20 w-20 object-cover"
+                          />
+                        <% else %>
+                          <div class="h-20 w-20 bg-base-300 rounded-lg flex items-center justify-center">
+                            <.icon name="hero-photo" class="h-8 w-8 text-base-content/30" />
+                          </div>
+                        <% end %>
+                      </div>
+                      
+<!-- Product Info -->
+                      <div class="text-center">
+                        <h3 class="font-bold text-sm leading-tight">{product.name}</h3>
+                        <p class="text-xs text-base-content/70">{product.brand.name}</p>
+                        <p class="text-lg font-bold text-primary mt-1">
+                          {format_price(product.price)}
+                        </p>
+                        <%= if format_cost_per_serving(product) do %>
+                          <p class="text-xs text-base-content/70">
+                            {format_cost_per_serving(product)}
+                          </p>
+                        <% end %>
+                      </div>
+                      
+<!-- Buy Now Button -->
+                      <%= if product.url do %>
+                        <.link href={product.url} target="_blank" class="btn btn-primary btn-xs">
+                          Buy Now
+                          <.icon name="hero-arrow-top-right-on-square" class="h-3 w-3 ml-1" />
+                        </.link>
+                      <% end %>
+                    </div>
+                  </th>
+                <% end %>
+              </tr>
+              
+<!-- Ingredients Header -->
+              <tr>
+                <th class="text-left font-bold bg-base-300 text-primary">Ingredient</th>
+                <%= for _product <- @products do %>
+                  <th class="text-center font-bold bg-base-300 text-primary min-w-32">
+                    Dosage
+                  </th>
+                <% end %>
+              </tr>
+            </thead>
+            <tbody>
+              <%= for ingredient_row <- @aligned_ingredients do %>
+                <tr class={[
+                  "hover:bg-base-200 transition-colors",
+                  if(ingredient_row.present_in_count > 1, do: "bg-primary/5")
+                ]}>
+                  <td class="font-medium">
+                    <div class="flex items-center gap-2">
+                      <span>{ingredient_row.ingredient.name}</span>
+                      <div class={[
+                        "badge badge-xs text-xs px-2 py-1",
+                        ingredient_category_color(ingredient_row.ingredient.category)
+                      ]}>
+                        {ingredient_row.ingredient.category}
+                      </div>
+                    </div>
+                  </td>
+                  <%= for product_data <- ingredient_row.product_data do %>
+                    <td class="text-center">
+                      <%= if product_data.has_ingredient do %>
+                        <div class="flex flex-col items-center">
+                          <span class="font-semibold text-primary">
+                            {format_dosage(product_data.product_ingredient)}
+                          </span>
+                          <%= if ingredient_row.present_in_count > 1 do %>
+                            <.icon name="hero-check-circle" class="h-4 w-4 text-success mt-1" />
+                          <% end %>
+                        </div>
+                      <% else %>
+                        <div class="flex flex-col items-center text-base-content/40">
+                          <span class="text-sm">Not included</span>
+                          <.icon name="hero-minus" class="h-4 w-4 mt-1" />
+                        </div>
+                      <% end %>
+                    </td>
+                  <% end %>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+<!-- Mobile/Tablet View -->
+      <div class="lg:hidden space-y-8">
+        <!-- Product Cards Carousel -->
+        <div class="carousel w-full space-x-4">
+          <%= for {product, _index} <- Enum.with_index(@products) do %>
+            <div class="carousel-item w-80 flex-shrink-0">
+              <div class="card bg-base-100 shadow-xl w-full">
+                <!-- Product Image -->
+                <figure class="px-6 pt-6">
+                  <%= if product.image_url do %>
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      class="rounded-xl h-32 w-32 object-cover"
+                    />
+                  <% else %>
+                    <div class="h-32 w-32 bg-base-300 rounded-xl flex items-center justify-center">
+                      <.icon name="hero-photo" class="h-12 w-12 text-base-content/30" />
+                    </div>
+                  <% end %>
+                </figure>
+
+                <div class="card-body">
+                  <!-- Product Info -->
+                  <div class="text-center mb-4">
+                    <h3 class="card-title text-lg justify-center">{product.name}</h3>
+                    <p class="text-sm text-base-content/70">{product.brand.name}</p>
+                    <p class="text-xl font-bold text-primary mt-1">
+                      {format_price(product.price)}
+                    </p>
+                    <%= if format_cost_per_serving(product) do %>
+                      <p class="text-sm text-base-content/70">
+                        {format_cost_per_serving(product)}
+                      </p>
+                    <% end %>
+                  </div>
+                  
+<!-- Buy Now Button -->
+                  <div class="card-actions justify-center">
+                    <%= if product.url do %>
+                      <.link href={product.url} target="_blank" class="btn btn-primary btn-sm">
+                        Buy Now
+                        <.icon name="hero-arrow-top-right-on-square" class="h-3 w-3 ml-1" />
+                      </.link>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+        
+<!-- Mobile Ingredients Comparison -->
+        <div class="space-y-4">
+          <h2 class="text-2xl font-bold text-primary mb-4">Ingredients Comparison</h2>
+
+          <%= for ingredient_row <- @aligned_ingredients do %>
+            <div class={[
+              "card bg-base-100 shadow-lg",
+              if(ingredient_row.present_in_count > 1, do: "bg-primary/5")
+            ]}>
+              <div class="card-body p-4">
+                <!-- Ingredient Header -->
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-2">
+                    <h3 class="font-bold">{ingredient_row.ingredient.name}</h3>
+                    <div class={[
+                      "badge badge-xs text-xs px-2 py-1",
+                      ingredient_category_color(ingredient_row.ingredient.category)
+                    ]}>
+                      {ingredient_row.ingredient.category}
+                    </div>
+                  </div>
+                  <%= if ingredient_row.present_in_count > 1 do %>
+                    <div class="badge badge-success badge-sm">
+                      In {ingredient_row.present_in_count} products
+                    </div>
+                  <% end %>
+                </div>
+                
+<!-- Product Dosages -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <%= for product_data <- ingredient_row.product_data do %>
+                    <div class="flex justify-between items-center p-2 bg-base-200 rounded">
+                      <span class="font-medium text-sm">{product_data.product.name}</span>
+                      <%= if product_data.has_ingredient do %>
+                        <span class="text-primary font-semibold">
+                          {format_dosage(product_data.product_ingredient)}
+                        </span>
+                      <% else %>
+                        <span class="text-base-content/40 text-sm">Not included</span>
+                      <% end %>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layouts.app>

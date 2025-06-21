@@ -596,13 +596,55 @@
             <.icon name="hero-table-cells" class="h-4 w-4 mr-1" /> View All Products
           </.link>
         </div>
+        
+<!-- Compare Products Section -->
+        <div :if={MapSet.size(@selected_products) > 0} class="mt-4 p-4 bg-base-200 rounded-lg">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <.icon name="hero-scale" class="h-5 w-5 text-primary" />
+              <span class="font-medium">
+                {MapSet.size(@selected_products)} product{if MapSet.size(@selected_products) != 1,
+                  do: "s"} selected
+              </span>
+            </div>
+            <button
+              phx-click="compare_selected"
+              class={[
+                "btn btn-primary btn-sm",
+                if(MapSet.size(@selected_products) < 2, do: "btn-disabled")
+              ]}
+              disabled={MapSet.size(@selected_products) < 2}
+            >
+              <.icon name="hero-scale" class="h-4 w-4 mr-1" /> Compare Products
+            </button>
+          </div>
+          <p :if={MapSet.size(@selected_products) < 2} class="text-sm text-base-content/70 mt-2">
+            Select at least 2 products to compare
+          </p>
+        </div>
       </div>
       
 <!-- Recommendations Grid -->
-      <div :if={@recommendations != []} class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+      <div
+        :if={@recommendations != []}
+        class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
+      >
         <%= for {rec, index} <- Enum.with_index(@recommendations) do %>
-          <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-200">
-            <!-- Rank Badge -->
+          <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-200 relative">
+            <!-- Selection Checkbox -->
+            <div class="absolute top-4 right-4 z-10">
+              <label class="cursor-pointer">
+                <input
+                  type="checkbox"
+                  class="checkbox checkbox-primary"
+                  phx-click="toggle_product"
+                  phx-value-product_id={rec.product.id}
+                  checked={MapSet.member?(@selected_products, rec.product.id)}
+                />
+              </label>
+            </div>
+            
+<!-- Rank Badge -->
             <div class="absolute top-4 left-4 z-10">
               <div class={[
                 "badge badge-lg font-bold",
@@ -702,8 +744,7 @@
                 </.link>
                 <%= if rec.product.url do %>
                   <.link href={rec.product.url} target="_blank" class="btn btn-primary btn-sm">
-                    Buy Now
-                    <.icon name="hero-arrow-top-right-on-square" class="h-3 w-3 ml-1" />
+                    Buy Now <.icon name="hero-arrow-top-right-on-square" class="h-3 w-3 ml-1" />
                   </.link>
                 <% end %>
               </div>
