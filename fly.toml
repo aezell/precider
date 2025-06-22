@@ -4,10 +4,6 @@
 app = 'precider'
 primary_region = 'ord'
 
-[build]
-  builder = "paketobuildpacks/builder:base"
-  buildpacks = ["gcr.io/paketo-buildpacks/elixir"]
-
 [env]
   PHX_SERVER = 'true'
   PORT = '8080'
