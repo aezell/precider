@@ -13,21 +13,11 @@ defmodule PreciderWeb.Router do
     plug :fetch_current_scope_for_user
   end
 
-  pipeline :api do
-    plug :accepts, ["json"]
-  end
-
-  # Health check endpoint (no authentication required)
-  scope "/", PreciderWeb do
-    pipe_through :api
-    
-    get "/health", HealthController, :check
-  end
-
   scope "/", PreciderWeb do
     pipe_through :browser
 
     get "/", PageController, :home
+    get "/health", HealthController, :check
 
     live "/product_finder", ProductFinderLive.Index, :index
     live "/pre_chooser", PreChooserLive.Index, :index
