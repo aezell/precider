@@ -17,6 +17,13 @@ defmodule PreciderWeb.Router do
     plug :accepts, ["json"]
   end
 
+  # Health check endpoint (no authentication required)
+  scope "/", PreciderWeb do
+    pipe_through :api
+    
+    get "/health", HealthController, :check
+  end
+
   scope "/", PreciderWeb do
     pipe_through :browser
 
