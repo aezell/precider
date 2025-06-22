@@ -23,6 +23,7 @@ defmodule PreciderWeb.ProductLive.Index do
      |> assign(:column_chooser_open, false)
      |> assign(:default_ingredient_columns, default_columns)
      |> assign(:selected_ingredient_columns, default_columns)
+     |> assign(:selected_products, [])
      |> stream(:products, products)}
   end
 
@@ -198,6 +199,43 @@ defmodule PreciderWeb.ProductLive.Index do
      |> assign(:selected_ingredient_columns, default_ids)
      |> assign(:displayed_ingredients, displayed_ingredients)
      |> stream(:products, products, reset: true)}
+  end
+
+  @impl true
+  def handle_event("toggle_product_selection", %{"id" => product_id}, socket) do
+    product_id = String.to_integer(product_id)
+    selected_products = socket.assigns.selected_products
+
+    {updated_selected, socket} =
+      if product_id in selected_products do
+        {List.delete(selected_products, product_id), socket}
+      else
+        if length(selected_products) < 3 do
+          {[product_id | selected_products], socket}
+        else
+          {selected_products,
+           put_flash(socket, :error, "You can only select up to 3 products for comparison")}
+        end
+      end
+
+    {:noreply, assign(socket, :selected_products, updated_selected)}
+  end
+
+  @impl true
+  def handle_event("clear_selection", _params, socket) do
+    {:noreply, assign(socket, :selected_products, [])}
+  end
+
+  @impl true
+  def handle_event("compare_products", _params, socket) do
+    selected_products = socket.assigns.selected_products
+
+    if length(selected_products) >= 2 do
+      product_ids_string = Enum.join(selected_products, ",")
+      {:noreply, push_navigate(socket, to: ~p"/compare?products=#{product_ids_string}")}
+    else
+      {:noreply, put_flash(socket, :error, "Please select at least 2 products to compare")}
+    end
   end
 
   @impl true

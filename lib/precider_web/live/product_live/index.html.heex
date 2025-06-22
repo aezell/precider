@@ -2,6 +2,25 @@
   <.header>
     Listing Products
     <:actions>
+      <!-- Compare Products Button -->
+      <button
+        :if={@selected_products != []}
+        type="button"
+        class="btn btn-success ml-2"
+        phx-click="compare_products"
+        disabled={length(@selected_products) < 2}
+      >
+        <.icon name="hero-scale" class="h-5 w-5" /> Compare ({length(@selected_products)})
+      </button>
+      <button
+        :if={@selected_products != []}
+        type="button"
+        class="btn btn-ghost btn-sm ml-1"
+        phx-click="clear_selection"
+        aria-label="Clear Selection"
+      >
+        <.icon name="hero-x-mark" class="h-4 w-4" />
+      </button>
       <!-- Pre-Chooser Wizard Link -->
       <.link navigate={~p"/pre_chooser"} class="btn btn-primary">
         <.icon name="hero-sparkles" class="h-5 w-5 mr-1" /> Pre Chooser Wizard
@@ -203,8 +222,16 @@
       <table class="table table-zebra w-full">
         <thead>
           <tr>
+            <th class="sticky left-0 z-20 bg-base-200 w-12 min-w-12">
+              <input
+                type="checkbox"
+                class="checkbox checkbox-primary"
+                disabled
+                title="Select products to compare"
+              />
+            </th>
             <th
-              class="sticky left-0 z-20 bg-base-200 w-32 min-w-32 cursor-pointer select-none"
+              class="sticky left-12 z-20 bg-base-200 w-32 min-w-32 cursor-pointer select-none"
               phx-click="sort_column"
               phx-value-column="brand"
             >
@@ -214,7 +241,7 @@
               <% end %>
             </th>
             <th
-              class="sticky left-32 z-20 bg-base-200 w-48 min-w-48 cursor-pointer select-none"
+              class="sticky left-44 z-20 bg-base-200 w-48 min-w-48 cursor-pointer select-none"
               phx-click="sort_column"
               phx-value-column="name"
             >
@@ -224,7 +251,7 @@
               <% end %>
             </th>
             <th
-              class="sticky left-[20rem] z-20 bg-base-200 w-24 min-w-24 cursor-pointer select-none"
+              class="sticky left-[23rem] z-20 bg-base-200 w-24 min-w-24 cursor-pointer select-none"
               phx-click="sort_column"
               phx-value-column="price"
             >
@@ -256,9 +283,29 @@
         </thead>
         <tbody id="products" phx-update="stream">
           <tr :for={{id, product} <- @streams.products} id={id}>
-            <td class="sticky left-0 z-10 bg-base-100 w-32 min-w-32">{product.brand.name}</td>
-            <td class="sticky left-32 z-10 bg-base-100 w-48 min-w-48">{product.name}</td>
-            <td class="sticky left-[20rem] z-10 bg-base-100 w-24 min-w-24">
+            <td class="sticky left-0 z-10 bg-base-100 w-12 min-w-12">
+              <%= if product.id not in @selected_products and length(@selected_products) >= 3 do %>
+                <input
+                  type="checkbox"
+                  class="checkbox checkbox-primary opacity-50 cursor-not-allowed"
+                  checked={false}
+                  disabled={true}
+                  title="Maximum 3 products can be selected"
+                />
+              <% else %>
+                <input
+                  type="checkbox"
+                  class="checkbox checkbox-primary"
+                  checked={product.id in @selected_products}
+                  phx-click="toggle_product_selection"
+                  phx-value-id={product.id}
+                  title="Select for comparison (max 3)"
+                />
+              <% end %>
+            </td>
+            <td class="sticky left-12 z-10 bg-base-100 w-32 min-w-32">{product.brand.name}</td>
+            <td class="sticky left-44 z-10 bg-base-100 w-48 min-w-48">{product.name}</td>
+            <td class="sticky left-[23rem] z-10 bg-base-100 w-24 min-w-24">
               ${format_decimal(product.price)}
             </td>
             <%= for ingredient <- @displayed_ingredients do %>
