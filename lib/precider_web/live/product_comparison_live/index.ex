@@ -21,7 +21,7 @@ defmodule PreciderWeb.ProductComparisonLive.Index do
       {:ok,
        socket
        |> put_flash(:error, "At least 2 products are required for comparison")
-       |> push_navigate(to: ~p"/pre-chooser")}
+       |> push_navigate(to: ~p"/pre_chooser")}
     else
       {:ok,
        socket
@@ -36,12 +36,12 @@ defmodule PreciderWeb.ProductComparisonLive.Index do
     {:ok,
      socket
      |> put_flash(:error, "No products specified for comparison")
-     |> push_navigate(to: ~p"/pre-chooser")}
+     |> push_navigate(to: ~p"/pre_chooser")}
   end
 
   @impl true
   def handle_event("back_to_chooser", _params, socket) do
-    {:noreply, push_navigate(socket, to: ~p"/pre-chooser")}
+    {:noreply, push_navigate(socket, to: ~p"/pre_chooser")}
   end
 
   defp build_aligned_ingredients(products) do
