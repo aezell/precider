@@ -1,0 +1,195 @@
+<Layouts.app flash={@flash}>
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold text-primary mb-2">{@product.name}</h1>
+      <p class="text-xl text-base-content/70 mb-4">
+        by <span class="font-semibold">{@product.brand.name}</span>
+      </p>
+      <.link navigate={~p"/product_finder"} class="btn btn-outline btn-sm">
+        <.icon name="hero-arrow-left" class="h-4 w-4 mr-1" /> Back to Products
+      </.link>
+    </div>
+    
+<!-- Product Overview Card -->
+    <div class="card bg-base-100 shadow-xl mb-8">
+      <div class="card-body">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- Product Image -->
+          <div class="flex justify-center">
+            <%= if @product.image_url do %>
+              <img
+                src={@product.image_url}
+                alt={@product.name}
+                class="rounded-lg max-w-full h-auto max-h-80 object-contain"
+              />
+            <% else %>
+              <div class="w-80 h-80 bg-base-300 rounded-lg flex items-center justify-center">
+                <.icon name="hero-photo" class="h-24 w-24 text-base-content/30" />
+              </div>
+            <% end %>
+          </div>
+          
+<!-- Product Details -->
+          <div class="space-y-6">
+            <!-- Price and Cost -->
+            <div class="text-center lg:text-left">
+              <div class="text-4xl font-bold text-primary mb-2">
+                {format_price(@product.price)}
+              </div>
+              <%= if format_cost_per_serving(@product) do %>
+                <div class="text-lg text-base-content/70">
+                  {format_cost_per_serving(@product)} per serving
+                </div>
+              <% end %>
+            </div>
+            
+<!-- Product Specs -->
+            <div class="stats stats-vertical lg:stats-horizontal shadow w-full">
+              <%= if @product.serving_size do %>
+                <div class="stat">
+                  <div class="stat-title">Serving Size</div>
+                  <div class="stat-value text-lg">{@product.serving_size}</div>
+                </div>
+              <% end %>
+              <%= if @product.servings_per_container do %>
+                <div class="stat">
+                  <div class="stat-title">Servings</div>
+                  <div class="stat-value text-lg">{@product.servings_per_container}</div>
+                </div>
+              <% end %>
+              <%= if @product.weight_in_grams do %>
+                <div class="stat">
+                  <div class="stat-title">Weight</div>
+                  <div class="stat-value text-lg">{@product.weight_in_grams}g</div>
+                </div>
+              <% end %>
+            </div>
+            
+<!-- Description -->
+            <%= if @product.description && @product.description != "" do %>
+              <div class="prose prose-sm max-w-none">
+                <p>
+                  <%= if @description_expanded do %>
+                    {@product.description}
+                  <% else %>
+                    {truncate_description(@product.description)}
+                  <% end %>
+                </p>
+                <%= if should_truncate_description?(@product.description) do %>
+                  <button
+                    phx-click="toggle_description"
+                    class="text-primary hover:text-primary-focus font-medium text-sm mt-2 focus:outline-none"
+                  >
+                    <%= if @description_expanded do %>
+                      Read Less
+                    <% else %>
+                      Read More
+                    <% end %>
+                  </button>
+                <% end %>
+              </div>
+            <% end %>
+            
+<!-- Buy Button -->
+            <%= if @product.url do %>
+              <div class="text-center lg:text-left">
+                <.link href={@product.url} target="_blank" class="btn btn-primary btn-lg">
+                  <.icon name="hero-shopping-cart" class="h-5 w-5 mr-2" /> Buy Now
+                  <.icon name="hero-arrow-top-right-on-square" class="h-4 w-4 ml-2" />
+                </.link>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+<!-- Ingredients Section -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title text-2xl text-primary mb-6">
+          <.icon name="hero-beaker" class="h-6 w-6 mr-2" /> Ingredients
+          <div class="badge badge-secondary">
+            {length(@sorted_ingredients)} total
+          </div>
+        </h2>
+
+        <%= if length(@sorted_ingredients) > 0 do %>
+          <!-- Desktop View -->
+          <div class="hidden md:block">
+            <div class="overflow-x-auto">
+              <table class="table w-full">
+                <thead>
+                  <tr>
+                    <th class="text-left font-bold bg-base-200">Ingredient</th>
+                    <th class="text-center font-bold bg-base-200">Dosage</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <%= for product_ingredient <- @sorted_ingredients do %>
+                    <tr class="hover:bg-base-200 transition-colors">
+                      <td class="font-medium">
+                        <div class="flex items-center gap-2">
+                          <span>{product_ingredient.ingredient.name}</span>
+                          <div
+                            class="tooltip tooltip-right"
+                            data-tip={build_ingredient_tooltip(product_ingredient.ingredient)}
+                          >
+                            <.icon
+                              name="hero-information-circle"
+                              class="h-4 w-4 text-base-content/50 hover:text-primary cursor-help"
+                            />
+                          </div>
+                        </div>
+                      </td>
+                      <td class="text-center">
+                        <span class="font-semibold text-primary text-lg">
+                          {format_dosage(product_ingredient)}
+                        </span>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+<!-- Mobile View -->
+          <div class="md:hidden space-y-3">
+            <%= for product_ingredient <- @sorted_ingredients do %>
+              <div class="card bg-base-200 shadow-sm">
+                <div class="card-body p-4">
+                  <div class="flex justify-between items-start">
+                    <div class="flex items-center gap-2 flex-1">
+                      <span class="font-medium">{product_ingredient.ingredient.name}</span>
+                      <div
+                        class="tooltip tooltip-right"
+                        data-tip={build_ingredient_tooltip(product_ingredient.ingredient)}
+                      >
+                        <.icon
+                          name="hero-information-circle"
+                          class="h-4 w-4 text-base-content/50 hover:text-primary cursor-help"
+                        />
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <span class="font-semibold text-primary text-lg">
+                        {format_dosage(product_ingredient)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="text-center text-base-content/70 py-8">
+            <.icon name="hero-beaker" class="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>No ingredient information available for this product.</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</Layouts.app>

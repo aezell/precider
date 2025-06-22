@@ -367,6 +367,27 @@ defmodule Precider.Catalog do
   @doc """
   Gets a single product.
 
+  Returns nil if the Product does not exist.
+
+  ## Examples
+
+      iex> get_product(123)
+      %Product{}
+
+      iex> get_product(456)
+      nil
+
+  """
+  def get_product(id) do
+    case Repo.get(Product, id) do
+      nil -> nil
+      product -> Repo.preload(product, [:brand, :product_ingredients, :ingredients])
+    end
+  end
+
+  @doc """
+  Gets a single product.
+
   Raises `Ecto.NoResultsError` if the Product does not exist.
 
   ## Examples
