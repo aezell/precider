@@ -20,26 +20,11 @@ defmodule PreciderWeb.Router do
   scope "/", PreciderWeb do
     pipe_through :browser
 
-    resources "/brands", BrandController
-    post "/brands/:id/toggle_completed", BrandController, :toggle_completed
-    get "/products/new/open_ingredient_modal", ProductController, :open_ingredient_modal
-    resources "/products", ProductController
-    resources "/ingredients", IngredientController
-    resources "/product_ingredients", ProductIngredientController
-    get "/import", ImportController, :index
     get "/", PageController, :home
 
     live "/product_finder", ProductLive.Index, :index
     live "/pre_chooser", PreChooserLive.Index, :index
     live "/compare", ProductComparisonLive.Index, :index
-  end
-
-  # Other scopes may use custom stacks.
-  scope "/api", PreciderWeb do
-    pipe_through :api
-
-    post "/import", ImportController, :import
-    post "/products/new/create_ingredient", ProductController, :create_ingredient
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
@@ -50,6 +35,17 @@ defmodule PreciderWeb.Router do
     # you can use Plug.BasicAuth to set up some basic authentication
     # as long as you are also using SSL (which you should anyway).
     import Phoenix.LiveDashboard.Router
+
+    scope "/", PreciderWeb do
+      pipe_through :browser
+
+      resources "/brands", BrandController
+      post "/brands/:id/toggle_completed", BrandController, :toggle_completed
+      get "/products/new/open_ingredient_modal", ProductController, :open_ingredient_modal
+      resources "/products", ProductController
+      resources "/ingredients", IngredientController
+      resources "/product_ingredients", ProductIngredientController
+    end
 
     scope "/dev" do
       pipe_through :browser
@@ -78,7 +74,7 @@ defmodule PreciderWeb.Router do
 
     live_session :current_user,
       on_mount: [{PreciderWeb.UserAuth, :mount_current_scope}] do
-      live "/users/register", UserLive.Registration, :new
+      # live "/users/register", UserLive.Registration, :new
       live "/users/log-in", UserLive.Login, :new
       live "/users/log-in/:token", UserLive.Confirmation, :new
     end
