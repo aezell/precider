@@ -22,7 +22,7 @@ defmodule PreciderWeb.Router do
 
     get "/", PageController, :home
 
-    live "/product_finder", ProductLive.Index, :index
+    live "/product_finder", ProductFinderLive.Index, :index
     live "/pre_chooser", PreChooserLive.Index, :index
     live "/compare", ProductComparisonLive.Index, :index
   end

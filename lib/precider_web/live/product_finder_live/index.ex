@@ -1,4 +1,4 @@
-defmodule PreciderWeb.ProductLive.Index do
+defmodule PreciderWeb.ProductFinderLive.Index do
   use PreciderWeb, :live_view
 
   alias Precider.Catalog
