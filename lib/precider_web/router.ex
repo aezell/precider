@@ -20,7 +20,7 @@ defmodule PreciderWeb.Router do
   # Health check endpoint (no authentication required)
   scope "/", PreciderWeb do
     pipe_through :api
-    
+
     get "/health", HealthController, :check
   end
 
