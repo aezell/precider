@@ -39,11 +39,6 @@ defmodule PreciderWeb.ProductComparisonLive.Index do
      |> push_navigate(to: ~p"/pre_chooser")}
   end
 
-  @impl true
-  def handle_event("back_to_chooser", _params, socket) do
-    {:noreply, push_navigate(socket, to: ~p"/pre_chooser")}
-  end
-
   defp build_aligned_ingredients(products) do
     # Get all unique ingredients across all products
     all_ingredients =

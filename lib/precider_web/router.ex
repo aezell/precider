@@ -31,6 +31,7 @@ defmodule PreciderWeb.Router do
 
     live "/product_finder", ProductFinderLive.Index, :index
     live "/pre_chooser", PreChooserLive.Index, :index
+    live "/pre_chooser/results", PreChooserLive.Index, :results
     live "/compare", ProductComparisonLive.Index, :index
     live "/product_detail/:id", ProductDetailLive.Index, :index
   end

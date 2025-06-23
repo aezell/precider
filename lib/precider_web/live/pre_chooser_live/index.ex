@@ -65,20 +65,41 @@ defmodule PreciderWeb.PreChooserLive.Index do
   ]
 
   @impl true
-  def mount(_params, _session, socket) do
-    {:ok,
-     socket
-     |> assign(:page_title, "Pre-Workout Chooser")
-     |> assign(:steps, @steps)
-     |> assign(:current_step, 1)
-     |> assign(:total_steps, length(@steps))
-     |> assign(:answers, %{})
-     |> assign(:loading, false)
-     |> assign(:recommendations, [])
-     |> assign(:show_results, false)
-     |> assign(:selected_products, MapSet.new())
-     |> assign(:ingredients, Catalog.list_ingredients())
-     |> assign(:products, Catalog.list_products())}
+  def mount(params, _session, socket) do
+    socket =
+      socket
+      |> assign(:page_title, "Pre-Workout Chooser")
+      |> assign(:steps, @steps)
+      |> assign(:current_step, 1)
+      |> assign(:total_steps, length(@steps))
+      |> assign(:answers, %{})
+      |> assign(:loading, false)
+      |> assign(:recommendations, [])
+      |> assign(:show_results, false)
+      |> assign(:selected_products, MapSet.new())
+      |> assign(:ingredients, Catalog.list_ingredients())
+      |> assign(:products, Catalog.list_products())
+
+    # Check if we have encoded answers in the URL (results page)
+    socket =
+      case params["answers"] do
+        nil ->
+          socket
+
+        encoded_answers ->
+          case decode_answers(encoded_answers) do
+            {:ok, answers} ->
+              socket
+              |> assign(:answers, answers)
+              |> assign(:current_step, length(@steps))
+              |> generate_recommendations_for_url()
+
+            {:error, _} ->
+              socket
+          end
+      end
+
+    {:ok, socket}
   end
 
   @impl true
@@ -87,12 +108,12 @@ defmodule PreciderWeb.PreChooserLive.Index do
     answers = Map.merge(socket.assigns.answers, params)
 
     if current_step >= socket.assigns.total_steps do
-      # Generate recommendations
+      # Generate recommendations and navigate to results URL
       {:noreply,
        socket
        |> assign(:answers, answers)
        |> assign(:loading, true)
-       |> generate_recommendations()}
+       |> generate_recommendations_with_navigation()}
     else
       {:noreply,
        socket
@@ -156,7 +177,21 @@ defmodule PreciderWeb.PreChooserLive.Index do
     end
   end
 
-  defp generate_recommendations(socket) do
+  # Generate recommendations and navigate to results URL (used when quiz is completed)
+  defp generate_recommendations_with_navigation(socket) do
+    socket = generate_recommendations_internal(socket)
+
+    encoded_answers = encode_answers(socket.assigns.answers)
+    push_navigate(socket, to: ~p"/pre_chooser/results?answers=#{encoded_answers}")
+  end
+
+  # Generate recommendations without navigation (used when loading from URL)
+  defp generate_recommendations_for_url(socket) do
+    generate_recommendations_internal(socket)
+  end
+
+  # Internal function that does the actual recommendation generation
+  defp generate_recommendations_internal(socket) do
     answers = socket.assigns.answers
     products = socket.assigns.products
 
@@ -657,6 +692,26 @@ defmodule PreciderWeb.PreChooserLive.Index do
       "#{formatted_cost} per serving"
     else
       nil
+    end
+  end
+
+  # URL encoding/decoding for answers
+  defp encode_answers(answers) do
+    answers
+    |> Jason.encode!()
+    |> Base.url_encode64(padding: false)
+  end
+
+  defp decode_answers(encoded) do
+    try do
+      decoded =
+        encoded
+        |> Base.url_decode64!(padding: false)
+        |> Jason.decode!()
+
+      {:ok, decoded}
+    rescue
+      _ -> {:error, :invalid_encoding}
     end
   end
 end
