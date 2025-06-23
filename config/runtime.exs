@@ -52,17 +52,14 @@ if config_env() == :prod do
 
   host = System.get_env("PHX_HOST") || "example.com"
   port = String.to_integer(System.get_env("PORT") || "4000")
-  
-  # Always bind to all interfaces in production
-  bind_ip = {0, 0, 0, 0}
 
   config :precider, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
   config :precider, PreciderWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
     http: [
-      # Bind on all IPv4 interfaces for Fly.io
-      ip: bind_ip,
+      # Bind to all interfaces for Fly.io - use :inet for IPv4 binding
+      ip: {0, 0, 0, 0},
       port: port
     ],
     secret_key_base: secret_key_base

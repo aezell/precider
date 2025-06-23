@@ -33,12 +33,13 @@ primary_region = 'atl'
   hard_limit = 1000
   soft_limit = 250
 
-[[http_service.checks]]
-  interval = '10s'
-  timeout = '5s'
-  grace_period = '5s'
-  method = 'GET'
-  path = '/'
+# Disable health checks during build - uncomment after successful deployment
+# [[http_service.checks]]
+#   interval = '10s'
+#   timeout = '5s'
+#   grace_period = '5s'
+#   method = 'GET'
+#   path = '/'
 
 [machine]
   auto_destroy_state = 'destroy'
