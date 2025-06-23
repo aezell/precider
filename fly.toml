@@ -5,8 +5,9 @@ app = 'precider'
 primary_region = 'atl'
 
 [build]
-  builder = "paketobuildpacks/builder:base"
-  buildpacks = ["gcr.io/paketo-buildpacks/elixir"]
+
+[deploy]
+  release_command = "./bin/precider eval \"Precider.Release.migrate\""
 
 [env]
   PHX_SERVER = 'true'
