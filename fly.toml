@@ -5,8 +5,7 @@ app = 'precider'
 primary_region = 'atl'
 
 [build]
-  builder = "heroku/buildpacks:20"
-  buildpacks = ["https://github.com/HashNuke/heroku-buildpack-elixir.git", "https://github.com/gjaldon/heroku-buildpack-phoenix-static.git"]
+  dockerfile = "Dockerfile"
 
 [deploy]
   release_command = "mix ecto.migrate"
