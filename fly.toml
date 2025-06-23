@@ -4,10 +4,8 @@
 app = 'precider'
 primary_region = 'atl'
 
-[build]
-
 [deploy]
-  release_command = "./bin/precider eval \"Precider.Release.migrate\""
+  release_command = "mix ecto.migrate"
 
 [env]
   PHX_SERVER = 'true'
