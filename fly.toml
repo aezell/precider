@@ -5,21 +5,21 @@ app = 'precider'
 primary_region = 'atl'
 
 [build]
-  dockerfile = "Dockerfile"
 
 [deploy]
-  release_command = "mix ecto.migrate"
+  release_command = '/app/bin/migrate'
 
 [env]
   PHX_SERVER = 'true'
   PORT = '8080'
   MIX_ENV = 'prod'
   PHX_HOST = 'precider.fly.dev'
+  RELEASE_COOKIE = "precider-cookie"
 
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_stop_machines = 'stop'
+  auto_stop_machines = false
   auto_start_machines = true
   min_machines_running = 0
   processes = ['app']
@@ -41,6 +41,3 @@ primary_region = 'atl'
 #   grace_period = '5s'
 #   method = 'GET'
 #   path = '/'
-
-[machine]
-  auto_destroy_state = 'destroy'
