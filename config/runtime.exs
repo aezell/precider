@@ -52,6 +52,9 @@ if config_env() == :prod do
 
   host = System.get_env("PHX_HOST") || "example.com"
   port = String.to_integer(System.get_env("PORT") || "4000")
+  
+  # Ensure we bind to all interfaces for Fly.io
+  bind_ip = if System.get_env("FLY_APP_NAME"), do: {0, 0, 0, 0}, else: {127, 0, 0, 1}
 
   config :precider, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
@@ -59,7 +62,7 @@ if config_env() == :prod do
     url: [host: host, port: 443, scheme: "https"],
     http: [
       # Bind on all IPv4 interfaces for Fly.io
-      ip: {0, 0, 0, 0},
+      ip: bind_ip,
       port: port
     ],
     secret_key_base: secret_key_base

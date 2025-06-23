@@ -8,6 +8,7 @@ primary_region = 'atl'
   PHX_SERVER = 'true'
   PORT = '8080'
   MIX_ENV = 'prod'
+  PHX_HOST = 'precider.fly.dev'
 
 [http_service]
   internal_port = 8080
