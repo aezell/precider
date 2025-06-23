@@ -1,5 +1,12 @@
 import Config
 
+database_url =
+    System.get_env("DATABASE_URL") ||
+      raise """
+      environment variable DATABASE_URL is missing.
+      For example: ecto://USER:PASS@HOST/DATABASE
+      """
+      
 # Configure your database
 config :precider, Precider.Repo,
   # username: "postgres",
@@ -9,8 +16,7 @@ config :precider, Precider.Repo,
   # stacktrace: true,
   # show_sensitive_data_on_connection_error: true,
   # pool_size: 10
-  url:
-    "postgresql://postgres.pjgpnswinaaqymypfopx:tfx*qme1WFV.thk4tng@aws-0-us-east-2.pooler.supabase.com:5432/postgres",
+  url: database_url,
   ssl_opts: [verify: :verify_none],
   ssl: true
 
