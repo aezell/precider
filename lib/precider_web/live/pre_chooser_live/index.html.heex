@@ -739,7 +739,7 @@
               
 <!-- Actions -->
               <div class="card-actions justify-center gap-2">
-                <.link navigate={~p"/products/#{rec.product}"} class="btn btn-outline btn-sm">
+                <.link navigate={~p"/product_detail/#{rec.product.id}"} class="btn btn-outline btn-sm">
                   View Details
                 </.link>
                 <%= if rec.product.url do %>
