@@ -7,7 +7,6 @@ import Config
 # before starting your production server.
 config :precider, PreciderWeb.Endpoint,
   cache_static_manifest: "priv/static/cache_manifest.json",
-  url: [host: "precider.com", port: 443, scheme: "https"],
   force_ssl: [hsts: true]
 
 # Configures Swoosh API Client
