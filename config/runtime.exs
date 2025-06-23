@@ -53,8 +53,8 @@ if config_env() == :prod do
   host = System.get_env("PHX_HOST") || "example.com"
   port = String.to_integer(System.get_env("PORT") || "4000")
   
-  # Ensure we bind to all interfaces for Fly.io
-  bind_ip = if System.get_env("FLY_APP_NAME"), do: {0, 0, 0, 0}, else: {127, 0, 0, 1}
+  # Always bind to all interfaces in production
+  bind_ip = {0, 0, 0, 0}
 
   config :precider, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
