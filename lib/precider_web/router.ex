@@ -56,6 +56,12 @@ defmodule PreciderWeb.Router do
       resources "/product_ingredients", ProductIngredientController
     end
 
+    scope "/api", PreciderWeb do
+      pipe_through :api
+
+      post "/products/new/create_ingredient", ProductController, :create_ingredient
+    end
+
     scope "/dev" do
       pipe_through :browser
 
