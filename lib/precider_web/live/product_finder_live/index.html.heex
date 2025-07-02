@@ -52,6 +52,35 @@
     </:actions>
   </.header>
   
+<!-- Product Search Bar -->
+  <div class="mb-4">
+    <form phx-change="update_product_search" autocomplete="off" class="max-w-md">
+      <div class="relative">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <.icon name="hero-magnifying-glass" class="h-5 w-5 text-gray-400" />
+        </div>
+        <input
+          type="text"
+          name="product_search_query"
+          value={@product_search_query}
+          placeholder="Search products or brands..."
+          class="input input-bordered w-full pl-10"
+          phx-debounce="300"
+          autocomplete="off"
+        />
+        <button
+          :if={@product_search_query != ""}
+          type="button"
+          class="absolute inset-y-0 right-0 pr-3 flex items-center"
+          phx-click="update_product_search"
+          phx-value-product_search_query=""
+        >
+          <.icon name="hero-x-mark" class="h-4 w-4 text-gray-400 hover:text-gray-600" />
+        </button>
+      </div>
+    </form>
+  </div>
+  
 <!-- Left Handle for Drawer (always rendered, slides with drawer) -->
   <div
     class={[

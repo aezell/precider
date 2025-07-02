@@ -17,6 +17,7 @@ defmodule PreciderWeb.ProductFinderLive.Index do
      |> assign(:drawer_open, false)
      |> assign(:ingredient_search_query, "")
      |> assign(:ingredient_search_results, [])
+     |> assign(:product_search_query, "")
      |> assign(:active_ingredient_filters, [])
      |> assign(:sort_by, nil)
      |> assign(:sort_dir, nil)
@@ -47,6 +48,34 @@ defmodule PreciderWeb.ProductFinderLive.Index do
       |> Enum.take(10)
 
     {:noreply, assign(socket, ingredient_search_query: query, ingredient_search_results: results)}
+  end
+
+  @impl true
+  def handle_event("update_product_search", %{"product_search_query" => query}, socket) do
+    all_products = Catalog.list_products()
+    filtered_products = filter_products_by_search(all_products, query)
+
+    ingredient_filtered_products =
+      filter_products(filtered_products, socket.assigns.active_ingredient_filters)
+
+    sorted_products =
+      sort_products(
+        ingredient_filtered_products,
+        {socket.assigns.sort_by, socket.assigns.sort_dir}
+      )
+
+    displayed_ingredients =
+      get_displayed_ingredients(
+        ingredient_filtered_products,
+        socket.assigns.active_ingredient_filters,
+        socket.assigns.selected_ingredient_columns
+      )
+
+    {:noreply,
+     socket
+     |> assign(:product_search_query, query)
+     |> assign(:displayed_ingredients, displayed_ingredients)
+     |> stream(:products, sorted_products, reset: true)}
   end
 
   @impl true
@@ -175,26 +204,54 @@ defmodule PreciderWeb.ProductFinderLive.Index do
   def handle_event("update_column_selections", %{"selected_columns" => selected_columns}, socket) do
     # Update selected columns from localStorage
     selected_ids = Enum.map(selected_columns, &String.to_integer/1)
-    products = Catalog.list_products()
+    all_products = Catalog.list_products()
+
+    search_filtered_products =
+      filter_products_by_search(all_products, socket.assigns.product_search_query)
+
+    ingredient_filtered_products =
+      filter_products(search_filtered_products, socket.assigns.active_ingredient_filters)
+
+    sorted_products =
+      sort_products(
+        ingredient_filtered_products,
+        {socket.assigns.sort_by, socket.assigns.sort_dir}
+      )
 
     displayed_ingredients =
-      get_displayed_ingredients(products, socket.assigns.active_ingredient_filters, selected_ids)
+      get_displayed_ingredients(
+        ingredient_filtered_products,
+        socket.assigns.active_ingredient_filters,
+        selected_ids
+      )
 
     {:noreply,
      socket
      |> assign(:selected_ingredient_columns, selected_ids)
      |> assign(:displayed_ingredients, displayed_ingredients)
-     |> stream(:products, products, reset: true)}
+     |> stream(:products, sorted_products, reset: true)}
   end
 
   @impl true
   def handle_event("select_all_columns", _params, socket) do
     all_ingredient_ids = Enum.map(socket.assigns.ingredients, & &1.id)
-    products = Catalog.list_products()
+    all_products = Catalog.list_products()
+
+    search_filtered_products =
+      filter_products_by_search(all_products, socket.assigns.product_search_query)
+
+    ingredient_filtered_products =
+      filter_products(search_filtered_products, socket.assigns.active_ingredient_filters)
+
+    sorted_products =
+      sort_products(
+        ingredient_filtered_products,
+        {socket.assigns.sort_by, socket.assigns.sort_dir}
+      )
 
     displayed_ingredients =
       get_displayed_ingredients(
-        products,
+        ingredient_filtered_products,
         socket.assigns.active_ingredient_filters,
         all_ingredient_ids
       )
@@ -203,22 +260,38 @@ defmodule PreciderWeb.ProductFinderLive.Index do
      socket
      |> assign(:selected_ingredient_columns, all_ingredient_ids)
      |> assign(:displayed_ingredients, displayed_ingredients)
-     |> stream(:products, products, reset: true)}
+     |> stream(:products, sorted_products, reset: true)}
   end
 
   @impl true
   def handle_event("select_default_columns", _params, socket) do
     default_ids = socket.assigns.default_ingredient_columns
-    products = Catalog.list_products()
+    all_products = Catalog.list_products()
+
+    search_filtered_products =
+      filter_products_by_search(all_products, socket.assigns.product_search_query)
+
+    ingredient_filtered_products =
+      filter_products(search_filtered_products, socket.assigns.active_ingredient_filters)
+
+    sorted_products =
+      sort_products(
+        ingredient_filtered_products,
+        {socket.assigns.sort_by, socket.assigns.sort_dir}
+      )
 
     displayed_ingredients =
-      get_displayed_ingredients(products, socket.assigns.active_ingredient_filters, default_ids)
+      get_displayed_ingredients(
+        ingredient_filtered_products,
+        socket.assigns.active_ingredient_filters,
+        default_ids
+      )
 
     {:noreply,
      socket
      |> assign(:selected_ingredient_columns, default_ids)
      |> assign(:displayed_ingredients, displayed_ingredients)
-     |> stream(:products, products, reset: true)}
+     |> stream(:products, sorted_products, reset: true)}
   end
 
   @impl true
@@ -271,9 +344,15 @@ defmodule PreciderWeb.ProductFinderLive.Index do
         true -> {column, :desc}
       end
 
-    products = Catalog.list_products()
-    filtered_products = filter_products(products, socket.assigns.active_ingredient_filters)
-    sorted_products = sort_products(filtered_products, new_sort)
+    all_products = Catalog.list_products()
+
+    search_filtered_products =
+      filter_products_by_search(all_products, socket.assigns.product_search_query)
+
+    ingredient_filtered_products =
+      filter_products(search_filtered_products, socket.assigns.active_ingredient_filters)
+
+    sorted_products = sort_products(ingredient_filtered_products, new_sort)
 
     {:noreply,
      socket
@@ -284,12 +363,23 @@ defmodule PreciderWeb.ProductFinderLive.Index do
 
   @impl true
   def handle_info({:update_products}, socket) do
-    products = filter_products(Catalog.list_products(), socket.assigns.active_ingredient_filters)
-    sorted_products = sort_products(products, {socket.assigns.sort_by, socket.assigns.sort_dir})
+    all_products = Catalog.list_products()
+
+    search_filtered_products =
+      filter_products_by_search(all_products, socket.assigns.product_search_query)
+
+    ingredient_filtered_products =
+      filter_products(search_filtered_products, socket.assigns.active_ingredient_filters)
+
+    sorted_products =
+      sort_products(
+        ingredient_filtered_products,
+        {socket.assigns.sort_by, socket.assigns.sort_dir}
+      )
 
     displayed_ingredients =
       get_displayed_ingredients(
-        products,
+        ingredient_filtered_products,
         socket.assigns.active_ingredient_filters,
         socket.assigns.selected_ingredient_columns
       )
@@ -502,4 +592,17 @@ defmodule PreciderWeb.ProductFinderLive.Index do
   defp sort_direction_fun(:desc), do: &>=/2
 
   defp sort_direction_fun(_), do: &<=/2
+
+  defp filter_products_by_search(products, ""), do: products
+  defp filter_products_by_search(products, nil), do: products
+
+  defp filter_products_by_search(products, query) do
+    query_lower = String.downcase(query)
+
+    Enum.filter(products, fn product ->
+      brand_match = String.contains?(String.downcase(product.brand.name), query_lower)
+      product_match = String.contains?(String.downcase(product.name), query_lower)
+      brand_match or product_match
+    end)
+  end
 end
