@@ -103,9 +103,29 @@ defmodule PreciderWeb.ProductFinderLive.Index do
     updated_filters =
       Enum.map(active_filters, fn filter ->
         if filter.ingredient_id == ingredient_id do
-          Map.merge(filter, Map.take(params, ["mode", "min", "max", "unit"]))
-          |> Map.update("min", nil, &parse_optional_decimal/1)
-          |> Map.update("max", nil, &parse_optional_decimal/1)
+          # Only update fields that are present in params to preserve existing values
+          # Use atom keys to match the initial filter structure
+          updated_filter =
+            if Map.has_key?(params, "mode"),
+              do: Map.put(filter, :mode, params["mode"]),
+              else: filter
+
+          updated_filter =
+            if Map.has_key?(params, "min"),
+              do: Map.put(updated_filter, :min, parse_optional_decimal(params["min"])),
+              else: updated_filter
+
+          updated_filter =
+            if Map.has_key?(params, "max"),
+              do: Map.put(updated_filter, :max, parse_optional_decimal(params["max"])),
+              else: updated_filter
+
+          updated_filter =
+            if Map.has_key?(params, "unit"),
+              do: Map.put(updated_filter, :unit, params["unit"]),
+              else: updated_filter
+
+          updated_filter
         else
           filter
         end
