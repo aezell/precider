@@ -356,6 +356,11 @@
                 <.link navigate={~p"/product_detail/#{product}"} class="btn btn-ghost btn-sm">
                   <.icon name="hero-eye" class="h-4 w-4" />
                 </.link>
+                <%= if product.url do %>
+                  <.link href={product.url} target="_blank" class="btn btn-primary btn-sm">
+                    <.icon name="hero-shopping-cart" class="h-4 w-4" />
+                  </.link>
+                <% end %>
               </div>
             </td>
           </tr>
